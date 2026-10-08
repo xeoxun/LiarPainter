@@ -1,0 +1,250 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce8659ef5e39892498578982eed3e5d7, type: 3}
+  m_Name: LiarPainterContentCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::LiarPainterContentCatalog
+  questions:
+  - "\uC774\uAC83\uC774 \uAC00\uC7A5 \uC798 \uC5B4\uC6B8\uB9AC\uB294 \uC7A5\uC18C\uB294?"
+  - "\uC774\uAC83\uACFC \uD568\uAED8 \uC788\uC73C\uBA74 \uC88B\uC740 \uAC83\uC740?"
+  - "\uC774\uAC83\uC744 \uCC98\uC74C \uBC1C\uACAC\uD55C \uC0AC\uB78C\uC758 \uBC18\uC751\uC740?"
+  - "\uC774\uAC83\uC774 \uC544\uC8FC \uAC70\uB300\uD574\uC9C4\uB2E4\uBA74 \uC5B4\uB5A4
+    \uC77C\uC774 \uBC8C\uC5B4\uC9C8\uAE4C?"
+  - "\uC774\uAC83\uC774 \uC544\uC8FC \uC791\uC544\uC9C4\uB2E4\uBA74 \uC5B4\uB514\uC5D0
+    \uC228\uC5B4 \uC788\uC744\uAE4C?"
+  - "\uC774\uAC83\uC774 \uC0B4\uC544 \uC6C0\uC9C1\uC778\uB2E4\uBA74 \uBB34\uC5C7\uC744
+    \uD560\uAE4C?"
+  - "\uC774\uAC83\uC774 \uC0AC\uB78C\uC744 \uB3C4\uC640\uC900\uB2E4\uBA74 \uC5B4\uB5BB\uAC8C
+    \uB3C4\uC640\uC904\uAE4C?"
+  - "\uC774\uAC83\uC774 \uC704\uD5D8\uD574\uC9C4\uB2E4\uBA74 \uC5B4\uB5A4 \uBAA8\uC2B5\uC77C\uAE4C?"
+  - "\uC774\uAC83\uC774 \uC8FC\uC778\uACF5\uC774\uB77C\uBA74 \uC5B4\uB5A4 \uC7A5\uBA74\uC774
+    \uB098\uC62C\uAE4C?"
+  - "\uC774\uAC83\uC774 \uC545\uB2F9\uC774\uB77C\uBA74 \uC5B4\uB5A4 \uC77C\uC744
+    \uBC8C\uC77C\uAE4C?"
+  - "\uC774\uAC83\uC744 \uC120\uBB3C\uB85C \uBC1B\uB294\uB2E4\uBA74 \uC5B4\uB5A4
+    \uC0C1\uD669\uC77C\uAE4C?"
+  - "\uC774\uAC83\uC774 \uD559\uAD50\uC5D0 \uB098\uD0C0\uB09C\uB2E4\uBA74 \uC5B4\uB5A4
+    \uC77C\uC774 \uC0DD\uAE38\uAE4C?"
+  - "\uC774\uAC83\uC774 \uBB34\uC778\uB3C4\uC5D0 \uC788\uB2E4\uBA74 \uC5B4\uB5BB\uAC8C
+    \uD65C\uC6A9\uD560\uAE4C?"
+  - "\uC774\uAC83\uC774 \uBBF8\uB798\uC5D0 \uC874\uC7AC\uD55C\uB2E4\uBA74 \uC5B4\uB5A4
+    \uBAA8\uC2B5\uC77C\uAE4C?"
+  - "\uC774\uAC83\uC774 \uC544\uC8FC \uC624\uB798\uC804\uC5D0 \uC874\uC7AC\uD588\uB2E4\uBA74
+    \uC5B4\uB5A4 \uBAA8\uC2B5\uC77C\uAE4C?"
+  - "\uC774\uAC83\uC744 \uBC24\uC5D0 \uB9CC\uB09C\uB2E4\uBA74 \uC5B4\uB5A4 \uC7A5\uBA74\uC77C\uAE4C?"
+  - "\uC774\uAC83\uC774 \uBE44 \uC624\uB294 \uB0A0\uC5D0\uB294 \uC5B4\uB5A4 \uBAA8\uC2B5\uC77C\uAE4C?"
+  - "\uC774\uAC83\uC774 \uACA8\uC6B8\uC744 \uBCF4\uB0B8\uB2E4\uBA74 \uC5B4\uB5A4
+    \uBAA8\uC2B5\uC77C\uAE4C?"
+  - "\uC774\uAC83\uC774 \uAFC8\uC18D\uC5D0 \uB098\uD0C0\uB09C\uB2E4\uBA74 \uC5B4\uB5A4
+    \uBAA8\uC2B5\uC77C\uAE4C?"
+  - "\uC774\uAC83 \uB54C\uBB38\uC5D0 \uD070 \uC18C\uB3D9\uC774 \uBC8C\uC5B4\uC9C4\uB2E4\uBA74
+    \uC5B4\uB5A4 \uC7A5\uBA74\uC77C\uAE4C?"
+  keywords:
+  - keyword: "\uACE0\uC591\uC774"
+    category: 0
+  - keyword: "\uAC15\uC544\uC9C0"
+    category: 0
+  - keyword: "\uD1A0\uB07C"
+    category: 0
+  - keyword: "\uD638\uB791\uC774"
+    category: 0
+  - keyword: "\uC0AC\uC790"
+    category: 0
+  - keyword: "\uCF54\uB07C\uB9AC"
+    category: 0
+  - keyword: "\uAE30\uB9B0"
+    category: 0
+  - keyword: "\uC6D0\uC22D\uC774"
+    category: 0
+  - keyword: "\uD3AD\uADC4"
+    category: 0
+  - keyword: "\uC545\uC5B4"
+    category: 0
+  - keyword: "\uC0C1\uC5B4"
+    category: 1
+  - keyword: "\uBB38\uC5B4"
+    category: 1
+  - keyword: "\uACE0\uB798"
+    category: 1
+  - keyword: "\uB3CC\uACE0\uB798"
+    category: 1
+  - keyword: "\uD574\uD30C\uB9AC"
+    category: 1
+  - keyword: "\uAC70\uBD81\uC774"
+    category: 1
+  - keyword: "\uC624\uC9D5\uC5B4"
+    category: 1
+  - keyword: "\uBD88\uAC00\uC0AC\uB9AC"
+    category: 1
+  - keyword: "\uAF43\uAC8C"
+    category: 1
+  - keyword: "\uBCF5\uC5B4"
+    category: 1
+  - keyword: "\uD53C\uC790"
+    category: 2
+  - keyword: "\uD584\uBC84\uAC70"
+    category: 2
+  - keyword: "\uAE40\uBC25"
+    category: 2
+  - keyword: "\uB77C\uBA74"
+    category: 2
+  - keyword: "\uCD08\uBC25"
+    category: 2
+  - keyword: "\uB5A1\uBCF6\uC774"
+    category: 2
+  - keyword: "\uCE58\uD0A8"
+    category: 2
+  - keyword: "\uC0CC\uB4DC\uC704\uCE58"
+    category: 2
+  - keyword: "\uB9CC\uB450"
+    category: 2
+  - keyword: "\uD56B\uB3C4\uADF8"
+    category: 2
+  - keyword: "\uCF00\uC774\uD06C"
+    category: 3
+  - keyword: "\uB3C4\uB11B"
+    category: 3
+  - keyword: "\uC544\uC774\uC2A4\uD06C\uB9BC"
+    category: 3
+  - keyword: "\uCD08\uCF5C\uB9BF"
+    category: 3
+  - keyword: "\uC0AC\uD0D5"
+    category: 3
+  - keyword: "\uC218\uBC15"
+    category: 3
+  - keyword: "\uBC14\uB098\uB098"
+    category: 3
+  - keyword: "\uB538\uAE30"
+    category: 3
+  - keyword: "\uC0AC\uACFC"
+    category: 3
+  - keyword: "\uD30C\uC778\uC560\uD50C"
+    category: 3
+  - keyword: "\uC6B0\uC0B0"
+    category: 4
+  - keyword: "\uAC00\uBC29"
+    category: 4
+  - keyword: "\uC548\uACBD"
+    category: 4
+  - keyword: "\uC2DC\uACC4"
+    category: 4
+  - keyword: "\uC758\uC790"
+    category: 4
+  - keyword: "\uCE68\uB300"
+    category: 4
+  - keyword: "\uAC70\uC6B8"
+    category: 4
+  - keyword: "\uCE6B\uC194"
+    category: 4
+  - keyword: "\uC5F4\uC1E0"
+    category: 4
+  - keyword: "\uD734\uC9C0"
+    category: 4
+  - keyword: "\uCEF4\uD4E8\uD130"
+    category: 5
+  - keyword: "\uC2A4\uB9C8\uD2B8\uD3F0"
+    category: 5
+  - keyword: "\uD154\uB808\uBE44\uC804"
+    category: 5
+  - keyword: "\uCE74\uBA54\uB77C"
+    category: 5
+  - keyword: "\uC774\uC5B4\uD3F0"
+    category: 5
+  - keyword: "\uB0C9\uC7A5\uACE0"
+    category: 5
+  - keyword: "\uC120\uD48D\uAE30"
+    category: 5
+  - keyword: "\uCCAD\uC18C\uAE30"
+    category: 5
+  - keyword: "\uAC8C\uC784\uAE30"
+    category: 5
+  - keyword: "\uB4DC\uB860"
+    category: 5
+  - keyword: "\uC790\uB3D9\uCC28"
+    category: 6
+  - keyword: "\uBC84\uC2A4"
+    category: 6
+  - keyword: "\uAE30\uCC28"
+    category: 6
+  - keyword: "\uBE44\uD589\uAE30"
+    category: 6
+  - keyword: "\uC790\uC804\uAC70"
+    category: 6
+  - keyword: "\uC624\uD1A0\uBC14\uC774"
+    category: 6
+  - keyword: "\uBC30"
+    category: 6
+  - keyword: "\uC7A0\uC218\uD568"
+    category: 6
+  - keyword: "\uB85C\uCF13"
+    category: 6
+  - keyword: "\uC5F4\uAE30\uAD6C"
+    category: 6
+  - keyword: "\uD574"
+    category: 7
+  - keyword: "\uB2EC"
+    category: 7
+  - keyword: "\uBCC4"
+    category: 7
+  - keyword: "\uAD6C\uB984"
+    category: 7
+  - keyword: "\uBC88\uAC1C"
+    category: 7
+  - keyword: "\uBB34\uC9C0\uAC1C"
+    category: 7
+  - keyword: "\uB098\uBB34"
+    category: 7
+  - keyword: "\uAF43"
+    category: 7
+  - keyword: "\uD654\uC0B0"
+    category: 7
+  - keyword: "\uD3ED\uD3EC"
+    category: 7
+  - keyword: "\uC6A9"
+    category: 8
+  - keyword: "\uC720\uB839"
+    category: 8
+  - keyword: "\uC880\uBE44"
+    category: 8
+  - keyword: "\uB9C8\uB140"
+    category: 8
+  - keyword: "\uB9C8\uBC95\uC0AC"
+    category: 8
+  - keyword: "\uC694\uC815"
+    category: 8
+  - keyword: "\uC778\uC5B4"
+    category: 8
+  - keyword: "\uC678\uACC4\uC778"
+    category: 8
+  - keyword: "\uB85C\uBD07"
+    category: 8
+  - keyword: "\uAD34\uBB3C"
+    category: 8
+  - keyword: "\uCD95\uAD6C\uACF5"
+    category: 9
+  - keyword: "\uB18D\uAD6C\uACF5"
+    category: 9
+  - keyword: "\uC57C\uAD6C\uBC29\uB9DD\uC774"
+    category: 9
+  - keyword: "\uC2A4\uCF00\uC774\uD2B8\uBCF4\uB4DC"
+    category: 9
+  - keyword: "\uB09A\uC2EF\uB300"
+    category: 9
+  - keyword: "\uD150\uD2B8"
+    category: 9
+  - keyword: "\uAE30\uD0C0"
+    category: 9
+  - keyword: "\uD48D\uC120"
+    category: 9
+  - keyword: "\uC7A5\uB09C\uAC10 \uCD1D"
+    category: 9
+  - keyword: "\uBCF4\uBB3C\uC0C1\uC790"
+    category: 9
