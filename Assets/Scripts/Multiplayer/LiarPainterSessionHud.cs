@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>Displays the join code in the existing GameTitleText.</summary>
+/// <summary>Displays the room name and join code in the existing GameTitleText.</summary>
 public sealed class LiarPainterSessionHud : MonoBehaviour
 {
     private TMP_Text titleText;
@@ -21,6 +21,7 @@ public sealed class LiarPainterSessionHud : MonoBehaviour
     {
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         SceneManager.sceneLoaded += HandleSceneLoaded;
+
         AttachToGameScene(SceneManager.GetActiveScene());
     }
 
@@ -29,6 +30,7 @@ public sealed class LiarPainterSessionHud : MonoBehaviour
     private static void AttachToGameScene(Scene scene)
     {
         if (scene.name != "GameScene") return;
+
         foreach (GameObject root in scene.GetRootGameObjects())
         {
             foreach (Canvas canvas in root.GetComponentsInChildren<Canvas>(true))
@@ -36,6 +38,7 @@ public sealed class LiarPainterSessionHud : MonoBehaviour
                 if (canvas.transform.Find("GameUI/Header/GameTitleText") == null) continue;
                 if (canvas.GetComponent<LiarPainterSessionHud>() == null)
                     canvas.gameObject.AddComponent<LiarPainterSessionHud>();
+
                 return;
             }
         }
@@ -60,9 +63,15 @@ public sealed class LiarPainterSessionHud : MonoBehaviour
     {
         while (isActiveAndEnabled)
         {
-            string code = LiarPainterSessionManager.Instance?.JoinCode;
+            LiarPainterSessionManager manager = LiarPainterSessionManager.Instance;
+            string roomName = manager?.CurrentSession?.Name;
+            string code = manager?.JoinCode;
             if (titleText != null)
-                titleText.text = string.IsNullOrWhiteSpace(code) ? originalTitle : $"참가 코드  {code}";
+            {
+                string title = string.IsNullOrWhiteSpace(roomName) ? originalTitle : roomName;
+                titleText.text = string.IsNullOrWhiteSpace(code) ? title : $"{title}  |  참가 코드 {code}";
+            }
+
             yield return new WaitForSecondsRealtime(0.5f);
         }
     }

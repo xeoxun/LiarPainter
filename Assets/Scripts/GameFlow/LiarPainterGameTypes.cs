@@ -12,7 +12,8 @@ public enum LiarPainterRole
 public enum LiarPainterTeam
 {
     Citizen,
-    FakePainter
+    FakePainter,
+    Draw
 }
 
 public enum LiarPainterGamePhase
@@ -23,21 +24,21 @@ public enum LiarPainterGamePhase
     Drawing,
     Discussion,
     Voting,
-    Result
+    Result,
+    FinalDefense
 }
 
-[Serializable]
-public sealed class LiarPainterRuleSettings
+// Shared game rules. Scene/Inspector values must never override these constants.
+public static class LiarPainterRuleSettings
 {
-    public float roleRevealSeconds = 5f;
-    public float questionRevealSeconds = 5f;
-    public float drawingSecondsPerPlayer = 8f;
-    public float discussionSeconds = 180f;
-    public float votingSeconds = 10f;
-    public float resultSeconds = 7f;
-    public int minimumPlayers = 4;
-    public int maximumPlayers = 8;
-    public bool fakePainterWinsOnVoteTie = true;
+    public const float roleRevealSeconds = 8f;
+    public const float questionRevealSeconds = 5f;
+    public const float drawingSecondsPerPlayer = 15f;
+    public const float discussionSeconds = 20f;
+    public const float votingSeconds = 10f;
+    public const float finalDefenseSeconds = 15f;
+    public const int minimumPlayers = 4;
+    public const int maximumPlayers = 8;
 }
 
 [Serializable]
@@ -108,11 +109,7 @@ public sealed class LiarPainterGameOutcome
     public bool WasTie { get; }
     public IReadOnlyList<LiarPainterPlayerState> Players { get; }
 
-    public LiarPainterGameOutcome(
-        LiarPainterTeam winningTeam,
-        string votedPlayerId,
-        bool wasTie,
-        IReadOnlyList<LiarPainterPlayerState> players)
+    public LiarPainterGameOutcome(LiarPainterTeam winningTeam, string votedPlayerId, bool wasTie, IReadOnlyList<LiarPainterPlayerState> players)
     {
         WinningTeam = winningTeam;
         VotedPlayerId = votedPlayerId;

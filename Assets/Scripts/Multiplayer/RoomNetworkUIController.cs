@@ -12,42 +12,18 @@ public sealed class RoomNetworkUIController : MonoBehaviour
 {
     [SerializeField] private string gameSceneName = "GameScene";
     private GameObject roomBrowserPanel, createRoomPopup, passwordRow, roomItemTemplate, emptyRoomMessage, loadingPanel;
-    private TMP_InputField roomNameSearchInput, roomNameInput, createPasswordInput, joinPasswordInput;
-    private TMP_Dropdown maxPlayersDropdown, privacyDropdown;
-    private TMP_Text loadingText, joinPasswordError;
+    private TMP_InputField roomNameSearchInput, roomNameInput, joinCodeInput;
+    private TMP_Dropdown privacyDropdown;
+    [SerializeField] private Toggle publicRoomToggle;
+    [SerializeField] private Toggle privateRoomToggle;
+    private TMP_Text loadingText, joinCodeError;
     private Transform roomListContent;
-    private GameObject joinPasswordPopup;
-    private ISessionInfo pendingPasswordRoom;
+    private GameObject joinCodePopup;
+    private ISessionInfo codeSelectedRoom;
+    private bool refreshingRooms;
+    private GameObject roomEntryNotice;
+    private TMP_Text roomEntryMessage;
     private readonly List<ISessionInfo> cachedRooms = new List<ISessionInfo>();
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetSceneHook()
-    {
-        SceneManager.sceneLoaded -= HandleSceneLoaded;
-    }
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void AttachToRoomBrowser()
-    {
-        SceneManager.sceneLoaded -= HandleSceneLoaded;
-        SceneManager.sceneLoaded += HandleSceneLoaded;
-        HandleSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
-    }
-
-    private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (scene.name != "MainScene") return;
-        foreach (GameObject root in scene.GetRootGameObjects())
-        {
-            foreach (Canvas canvas in root.GetComponentsInChildren<Canvas>(true))
-            {
-                if (canvas.transform.Find("RoomBrowserPanel") == null) continue;
-                if (canvas.GetComponent<RoomNetworkUIController>() == null)
-                    canvas.gameObject.AddComponent<RoomNetworkUIController>();
-                return;
-            }
-        }
-    }
 
     private void Awake()
     {
@@ -56,8 +32,8 @@ public sealed class RoomNetworkUIController : MonoBehaviour
         createRoomPopup = canvas.Find("CreateRoomPopup")?.gameObject;
         roomNameSearchInput = canvas.Find("RoomBrowserPanel/SearchArea/SearchInputField")?.GetComponent<TMP_InputField>();
         roomNameInput = canvas.Find("CreateRoomPopup/PopupWindow/RoomNameRow/InputField")?.GetComponent<TMP_InputField>();
-        createPasswordInput = canvas.Find("CreateRoomPopup/PopupWindow/PasswordRow/InputField")?.GetComponent<TMP_InputField>();
-        maxPlayersDropdown = canvas.Find("CreateRoomPopup/PopupWindow/MaxPlayersRow/Dropdown")?.GetComponent<TMP_Dropdown>();
+        if (roomNameInput != null) roomNameInput.characterLimit = LiarPainterSessionManager.MaximumRoomNameLength;
+        canvas.Find("CreateRoomPopup/PopupWindow/MaxPlayersRow")?.gameObject.SetActive(false);
         privacyDropdown = canvas.Find("CreateRoomPopup/PopupWindow/PrivateRoomRow/Dropdown")?.GetComponent<TMP_Dropdown>();
         passwordRow = canvas.Find("CreateRoomPopup/PopupWindow/PasswordRow")?.gameObject;
         roomListContent = canvas.Find("RoomBrowserPanel/RoomListScrollView/Viewport/Content");
@@ -65,24 +41,17 @@ public sealed class RoomNetworkUIController : MonoBehaviour
         loadingPanel = canvas.Find("RoomBrowserPanel/LoadingPanel")?.gameObject;
         loadingText = canvas.Find("RoomBrowserPanel/LoadingPanel/LoadingText")?.GetComponent<TMP_Text>();
 
-        Transform mainPanel = canvas.Find("MainPanel");
-        Bind(FindChildByName(mainPanel, "Start_btn"), ShowRoomBrowser);
-        Bind(FindChildByName(mainPanel, "Finish_btn"), QuitGame);
         if (roomBrowserPanel != null) roomBrowserPanel.SetActive(false);
         if (createRoomPopup != null) createRoomPopup.SetActive(false);
 
         PrepareRoomItemTemplate();
-        ConfigurePinInput(createPasswordInput);
-        ConfigurePrivacyDropdown();
-        BuildJoinPasswordPopup();
-        Bind(canvas.Find("RoomBrowserPanel/SearchArea/CreateRoomButton"), ShowCreatePopup);
-        Bind(canvas.Find("RoomBrowserPanel/SearchArea/RefreshButton"), RefreshRooms);
-        Bind(canvas.Find("CreateRoomPopup/PopupWindow/CancelButton"), HideCreatePopup);
-        Bind(canvas.Find("CreateRoomPopup/PopupWindow/CreateButton"), CreateRoom);
-        Bind(canvas.Find("RoomBrowserPanel/Footer/QuickJoinButton"), ApplyRoomNameFilter);
-        Bind(canvas.Find("RoomBrowserPanel/Header/BackButton"), LeaveOrCloseBrowser);
+        ConfigurePrivacyToggles();
+        ConnectJoinCodePopup();
+        roomEntryNotice = canvas.Find("RoomEntryNoticePopup")?.gameObject;
+        roomEntryMessage = canvas.Find("RoomEntryNoticePopup/PopupWindow/Guide")?.GetComponent<TMP_Text>();
+        if (roomEntryNotice != null) roomEntryNotice.SetActive(false);
         ConfigureRoomNameSearch(canvas);
-        if (privacyDropdown != null)
+        if (publicRoomToggle == null && privacyDropdown != null)
         {
             privacyDropdown.onValueChanged.AddListener(HandlePrivacyChanged);
             HandlePrivacyChanged(privacyDropdown.value);
@@ -91,7 +60,12 @@ public sealed class RoomNetworkUIController : MonoBehaviour
         if (createRoomPopup != null) createRoomPopup.SetActive(false);
     }
 
-    private void ShowRoomBrowser()
+    public void CloseRoomBrowser()
+    {
+        if (roomBrowserPanel != null) roomBrowserPanel.SetActive(false);
+    }
+
+    public void ShowRoomBrowser()
     {
         if (roomBrowserPanel == null) return;
         roomBrowserPanel.SetActive(true);
@@ -106,21 +80,13 @@ public sealed class RoomNetworkUIController : MonoBehaviour
         return null;
     }
 
-    private static void QuitGame()
+    public void QuitGame()
     {
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
         Application.Quit();
 #endif
-    }
-
-    private static void Bind(Transform target, Action action)
-    {
-        Button button = target != null ? target.GetComponent<Button>() : null;
-        if (button == null) return;
-        button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(() => action());
     }
 
     private void PrepareRoomItemTemplate()
@@ -134,9 +100,28 @@ public sealed class RoomNetworkUIController : MonoBehaviour
 
     private void HandlePrivacyChanged(int value)
     {
-        bool protectedRoom = value == 1;
-        if (passwordRow != null) passwordRow.SetActive(protectedRoom);
-        if (!protectedRoom && createPasswordInput != null) createPasswordInput.text = string.Empty;
+        if (passwordRow != null) passwordRow.SetActive(false);
+    }
+
+    private void ConfigurePrivacyToggles()
+    {
+        Transform row = transform.Find("CreateRoomPopup/PopupWindow/PrivateRoomRow");
+        if (row == null) return;
+        if (publicRoomToggle == null) publicRoomToggle = row.Find("PublicRoom")?.GetComponent<Toggle>();
+        if (privateRoomToggle == null) privateRoomToggle = row.Find("PrivateRoom")?.GetComponent<Toggle>();
+        if (publicRoomToggle == null || privateRoomToggle == null)
+        {
+            ConfigurePrivacyDropdown();
+            return;
+        }
+        ToggleGroup group = row.GetComponent<ToggleGroup>();
+        if (group == null) group = row.gameObject.AddComponent<ToggleGroup>();
+        group.allowSwitchOff = false;
+        publicRoomToggle.group = group;
+        privateRoomToggle.group = group;
+        privateRoomToggle.SetIsOnWithoutNotify(false);
+        publicRoomToggle.SetIsOnWithoutNotify(true);
+        HandlePrivacyChanged(0);
     }
 
     private void ConfigurePrivacyDropdown()
@@ -247,43 +232,63 @@ public sealed class RoomNetworkUIController : MonoBehaviour
         trigger.triggers.Add(click);
     }
 
-    private void ShowCreatePopup()
+    public void ShowCreatePopup()
     {
         if (createRoomPopup != null) createRoomPopup.SetActive(true);
         HandlePrivacyChanged(privacyDropdown != null ? privacyDropdown.value : 0);
     }
 
-    private void HideCreatePopup() { if (createRoomPopup != null) createRoomPopup.SetActive(false); }
+    public void HideCreatePopup() { if (createRoomPopup != null) createRoomPopup.SetActive(false); }
 
-    private async void CreateRoom()
+    public async void CreateRoom()
     {
         LiarPainterSessionManager sessions = LiarPainterSessionManager.Instance;
-        if (sessions == null) return;
-        bool passwordProtected = privacyDropdown != null && privacyDropdown.value == 1;
-        string pin = createPasswordInput != null ? createPasswordInput.text.Trim() : string.Empty;
-        if (passwordProtected && !LiarPainterSessionManager.IsValidFourDigitPin(pin))
+        if (sessions == null || sessions.IsBusy) return;
+        string roomName = roomNameInput != null ? roomNameInput.text.Trim() : string.Empty;
+        if (string.IsNullOrWhiteSpace(roomName) || roomName.Length > LiarPainterSessionManager.MaximumRoomNameLength)
         {
-            SetLoading(true, "비밀번호는 숫자 4자리로 입력하세요.");
+            SetLoading(true, string.IsNullOrWhiteSpace(roomName) ? "방 제목을 입력하세요." : "방 제목은 최대 10글자까지 입력할 수 있습니다.");
+            if (roomNameInput != null) roomNameInput.ActivateInputField();
             return;
         }
+        bool isPrivate = privateRoomToggle != null
+            ? privateRoomToggle.isOn
+            : privacyDropdown != null && privacyDropdown.value == 1;
         SetLoading(true, "방을 생성하는 중...");
-        int maxPlayers = maxPlayersDropdown != null ? Mathf.Clamp(4 + maxPlayersDropdown.value, 4, 8) : 8;
-        bool created = await sessions.CreateRoomAsync(roomNameInput != null ? roomNameInput.text : string.Empty,
-            maxPlayers, passwordProtected, pin);
+        bool created = await sessions.CreateRoomAsync(roomName, isPrivate);
         if (created) { HideCreatePopup(); await EnterGameSceneAsHostAsync(); }
         else SetLoading(true, "방 생성에 실패했습니다.");
     }
 
-    private async void RefreshRooms()
+    public async void RefreshRooms()
     {
         LiarPainterSessionManager sessions = LiarPainterSessionManager.Instance;
-        if (sessions == null || roomListContent == null || roomItemTemplate == null) return;
-        SetLoading(true, "방 목록을 불러오는 중...");
-        IList<ISessionInfo> rooms = await sessions.QueryRoomsAsync();
-        cachedRooms.Clear();
-        cachedRooms.AddRange(rooms);
-        ApplyRoomNameFilter();
-        SetLoading(false, string.Empty);
+        if (refreshingRooms || sessions == null || roomListContent == null || roomItemTemplate == null) return;
+        refreshingRooms = true;
+        try
+        {
+            SetLoading(true, "방 목록을 불러오는 중...");
+            IList<ISessionInfo> rooms = await sessions.QueryRoomsAsync();
+            if (this == null) return;
+            cachedRooms.Clear();
+            cachedRooms.AddRange(rooms);
+            ApplyRoomNameFilter();
+            SetLoading(false, string.Empty);
+            if (sessions.LastRoomQueryFailed && cachedRooms.Count == 0 && emptyRoomMessage != null)
+            {
+                TMP_Text message = emptyRoomMessage.GetComponentInChildren<TMP_Text>(true);
+                if (message != null) message.text = "방 목록 조회에 실패했습니다. 잠시 후 새로고침해 주세요.";
+            }
+            else if (emptyRoomMessage != null)
+            {
+                TMP_Text message = emptyRoomMessage.GetComponentInChildren<TMP_Text>(true);
+                if (message != null) message.text = "생성된 방이 없습니다.";
+            }
+        }
+        finally
+        {
+            refreshingRooms = false;
+        }
     }
 
     private void ConfigureRoomNameSearch(Transform canvas)
@@ -297,7 +302,7 @@ public sealed class RoomNetworkUIController : MonoBehaviour
         }
 
         TMP_Text searchButtonText = canvas.Find("RoomBrowserPanel/Footer/QuickJoinButton/ButtonText")?.GetComponent<TMP_Text>();
-        if (searchButtonText != null) searchButtonText.text = "검색";
+        if (searchButtonText != null) searchButtonText.text = "코드로 입장";
     }
 
     private void ApplyRoomNameFilter()
@@ -316,21 +321,29 @@ public sealed class RoomNetworkUIController : MonoBehaviour
         foreach (ISessionInfo room in rooms)
         {
             GameObject item = Instantiate(roomItemTemplate, roomListContent);
+
             item.name = "Room_" + room.Id;
             item.SetActive(true);
+
             SetChildText(item.transform, "RoomNameText", room.Name);
-            SetChildText(item.transform, "HostNameText", "방장");
+            SetChildText(item.transform, "HostNameText", LiarPainterSessionManager.GetHostNickname(room));
             SetChildText(item.transform, "PlayerCountText", $"{room.MaxPlayers - room.AvailableSlots} / {room.MaxPlayers}");
-            SetChildText(item.transform, "StatusText", room.IsLocked ? "잠김" : "대기 중");
-            SetChildText(item.transform, "PrivacyText", room.HasPassword ? "비밀번호" : "공개");
+            TMP_Text status = item.transform.Find("StatusText")?.GetComponent<TMP_Text>();
+            if (status != null)
+            {
+                status.richText = true;
+                status.text = room.IsLocked ? "<color=#FF4444>게임 중</color>"
+                    : room.AvailableSlots <= 0 ? "정원 마감" : "대기 중";
+            }
+            SetChildText(item.transform, "PrivacyText", LiarPainterSessionManager.RequiresJoinCode(room) ? "비공개" : "공개");
+
             Button join = item.transform.Find("JoinButton")?.GetComponent<Button>();
+
             if (join != null)
             {
-                ISessionInfo captured = room;
-                join.interactable = !room.IsLocked && room.AvailableSlots > 0;
-                join.onClick.RemoveAllListeners();
-                join.onClick.AddListener(() => SelectRoom(captured));
+                join.interactable = true;
             }
+            item.GetComponent<RoomListItemAction>()?.Configure(this, room);
         }
         if (emptyRoomMessage != null) emptyRoomMessage.SetActive(rooms.Count == 0);
     }
@@ -341,48 +354,76 @@ public sealed class RoomNetworkUIController : MonoBehaviour
         if (label != null) label.text = value;
     }
 
-    private void SelectRoom(ISessionInfo room)
-    {
-        if (!room.HasPassword) { JoinSelectedRoom(room, string.Empty); return; }
-        pendingPasswordRoom = room;
-        if (joinPasswordInput != null) joinPasswordInput.text = string.Empty;
-        if (joinPasswordError != null) joinPasswordError.text = string.Empty;
-        if (joinPasswordPopup != null) joinPasswordPopup.SetActive(true);
-        joinPasswordInput?.ActivateInputField();
-    }
+    public void SelectRoom(ISessionInfo room) => JoinSelectedRoom(room);
 
-    private async void JoinSelectedRoom(ISessionInfo room, string pin)
+    private async void JoinSelectedRoom(ISessionInfo room)
     {
-        if (room == null || LiarPainterSessionManager.Instance == null) return;
-        SetLoading(true, "방에 참가하는 중...");
-        bool joined = await LiarPainterSessionManager.Instance.JoinRoomByIdAsync(room.Id, pin);
-        if (joined) return;
-        SetLoading(false, string.Empty);
-        if (room.HasPassword)
+        LiarPainterSessionManager sessions = LiarPainterSessionManager.Instance;
+        if (room == null || sessions == null || sessions.IsBusy) return;
+        string entryError = LiarPainterSessionManager.GetRoomEntryError(room);
+        if (!string.IsNullOrEmpty(entryError)) { ShowRoomEntryNotice(entryError); return; }
+        if (LiarPainterSessionManager.RequiresJoinCode(room))
         {
-            if (joinPasswordPopup != null) joinPasswordPopup.SetActive(true);
-            if (joinPasswordError != null) joinPasswordError.text = "비밀번호가 올바르지 않거나 입장할 수 없습니다.";
-        }
-        else SetLoading(true, "방 참가에 실패했습니다.");
-    }
-
-    private void SubmitRoomPassword()
-    {
-        string pin = joinPasswordInput != null ? joinPasswordInput.text.Trim() : string.Empty;
-        if (!LiarPainterSessionManager.IsValidFourDigitPin(pin))
-        {
-            if (joinPasswordError != null) joinPasswordError.text = "숫자 4자리를 입력하세요.";
+            ShowJoinCodePopup();
+            codeSelectedRoom = room;
             return;
         }
-        ISessionInfo room = pendingPasswordRoom;
-        if (joinPasswordPopup != null) joinPasswordPopup.SetActive(false);
-        JoinSelectedRoom(room, pin);
+        SetLoading(true, "방에 참가하는 중...");
+        if (!await sessions.JoinRoomByIdAsync(room.Id)) ShowRoomEntryNotice(sessions.LastJoinError);
     }
 
-    private void ClosePasswordPopup()
+    public async void SubmitJoinCode()
     {
-        pendingPasswordRoom = null;
-        if (joinPasswordPopup != null) joinPasswordPopup.SetActive(false);
+        LiarPainterSessionManager sessions = LiarPainterSessionManager.Instance;
+        if (sessions == null || sessions.IsBusy) return;
+        string code = joinCodeInput != null ? joinCodeInput.text.Trim() : string.Empty;
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            if (joinCodeError != null) joinCodeError.text = "참가 코드를 입력하세요.";
+            return;
+        }
+        if (joinCodeError != null) joinCodeError.text = "입장하는 중...";
+        if (codeSelectedRoom != null && !LiarPainterSessionManager.MatchesJoinCode(codeSelectedRoom, code))
+        {
+            if (joinCodeError != null) joinCodeError.text = "선택한 방의 참가 코드와 일치하지 않습니다.";
+            return;
+        }
+        bool joined = await sessions.JoinRoomByCodeAsync(code);
+        if (joined) CloseCodePopup();
+        else if (joinCodeError != null) joinCodeError.text = sessions.LastJoinError;
+    }
+
+    private void ShowRoomEntryNotice(string message)
+    {
+        SetLoading(false, string.Empty);
+        if (roomEntryMessage != null) roomEntryMessage.text = message;
+        if (roomEntryNotice == null) { Debug.LogWarning(message); return; }
+        roomEntryNotice.transform.SetAsLastSibling();
+        roomEntryNotice.SetActive(true);
+    }
+
+    public void CloseRoomEntryNotice()
+    {
+        if (roomEntryNotice != null) roomEntryNotice.SetActive(false);
+    }
+
+    public void CloseCodePopup()
+    {
+        codeSelectedRoom = null;
+        if (joinCodePopup != null) joinCodePopup.SetActive(false);
+    }
+
+    public void ShowJoinCodePopup()
+    {
+        codeSelectedRoom = null;
+        if (joinCodeInput != null) joinCodeInput.text = string.Empty;
+        if (joinCodeError != null) joinCodeError.text = string.Empty;
+        if (joinCodePopup != null)
+        {
+            joinCodePopup.transform.SetAsLastSibling();
+            joinCodePopup.SetActive(true);
+        }
+        joinCodeInput?.ActivateInputField();
     }
 
     private async Task EnterGameSceneAsHostAsync()
@@ -393,7 +434,7 @@ public sealed class RoomNetworkUIController : MonoBehaviour
         else SetLoading(true, "네트워크 시작을 확인하지 못했습니다.");
     }
 
-    private async void LeaveOrCloseBrowser()
+    public async void LeaveOrCloseBrowser()
     {
         LiarPainterSessionManager sessions = LiarPainterSessionManager.Instance;
         if (sessions != null && sessions.CurrentSession != null) await sessions.LeaveRoomAsync();
@@ -406,71 +447,24 @@ public sealed class RoomNetworkUIController : MonoBehaviour
         if (loadingPanel != null) loadingPanel.SetActive(visible);
     }
 
-    private static void ConfigurePinInput(TMP_InputField input)
-    {
-        if (input == null) return;
-        input.characterLimit = 4;
-        input.contentType = TMP_InputField.ContentType.Pin;
-        input.characterValidation = TMP_InputField.CharacterValidation.Digit;
-        input.keyboardType = TouchScreenKeyboardType.NumberPad;
-    }
 
-    private void BuildJoinPasswordPopup()
-    {
-        TMP_Text style = GetComponentInChildren<TMP_Text>(true);
-        joinPasswordPopup = Ui("JoinPasswordPopup", transform, typeof(Image));
-        Stretch((RectTransform)joinPasswordPopup.transform);
-        joinPasswordPopup.GetComponent<Image>().color = new Color(0f, 0f, 0f, .72f);
-        GameObject window = Ui("PopupWindow", joinPasswordPopup.transform, typeof(Image));
-        RectTransform wr = (RectTransform)window.transform;
-        wr.anchorMin = wr.anchorMax = new Vector2(.5f, .5f); wr.sizeDelta = new Vector2(520, 330); wr.anchoredPosition = Vector2.zero;
-        window.GetComponent<Image>().color = new Color32(28, 36, 48, 255);
-        Label("Title", window.transform, "비밀번호 입력", 30, new Vector2(0, 108), new Vector2(440, 50), style);
-        Label("Guide", window.transform, "숫자 4자리 비밀번호를 입력하세요.", 18, new Vector2(0, 57), new Vector2(440, 38), style);
-        GameObject inputObject = Ui("PasswordInput", window.transform, typeof(Image), typeof(TMP_InputField));
-        RectTransform ir = (RectTransform)inputObject.transform;
-        ir.anchorMin = ir.anchorMax = new Vector2(.5f, .5f); ir.sizeDelta = new Vector2(320, 58); ir.anchoredPosition = new Vector2(0, 5);
-        inputObject.GetComponent<Image>().color = new Color32(16, 22, 30, 255);
-        joinPasswordInput = inputObject.GetComponent<TMP_InputField>();
-        joinPasswordInput.textComponent = Label("Text", inputObject.transform, "", 27, Vector2.zero, new Vector2(280, 46), style);
-        ConfigurePinInput(joinPasswordInput);
-        joinPasswordError = Label("Error", window.transform, "", 16, new Vector2(0, -42), new Vector2(440, 35), style);
-        joinPasswordError.color = new Color32(255, 120, 110, 255);
-        PopupButton("CancelButton", window.transform, "취소", new Vector2(-105, -112), new Color32(74, 82, 94, 255), ClosePasswordPopup, style);
-        PopupButton("EnterButton", window.transform, "입장", new Vector2(105, -112), new Color32(57, 124, 214, 255), SubmitRoomPassword, style);
-        joinPasswordPopup.SetActive(false);
-    }
 
-    private static GameObject Ui(string name, Transform parent, params Type[] components)
+    private void ConnectJoinCodePopup()
     {
-        GameObject result = new GameObject(name, typeof(RectTransform));
-        result.transform.SetParent(parent, false);
-        foreach (Type type in components) result.AddComponent(type);
-        return result;
-    }
-
-    private static TMP_Text Label(string name, Transform parent, string value, float size, Vector2 position, Vector2 dimensions, TMP_Text style)
-    {
-        TextMeshProUGUI label = Ui(name, parent, typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
-        RectTransform rect = (RectTransform)label.transform;
-        rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f); rect.sizeDelta = dimensions; rect.anchoredPosition = position;
-        label.text = value; label.fontSize = size; label.alignment = TextAlignmentOptions.Center; label.color = Color.white;
-        if (style != null) label.font = style.font;
-        return label;
-    }
-
-    private static void PopupButton(string name, Transform parent, string caption, Vector2 position, Color color, Action action, TMP_Text style)
-    {
-        GameObject result = Ui(name, parent, typeof(Image), typeof(Button));
-        RectTransform rect = (RectTransform)result.transform;
-        rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f); rect.sizeDelta = new Vector2(170, 58); rect.anchoredPosition = position;
-        result.GetComponent<Image>().color = color;
-        result.GetComponent<Button>().onClick.AddListener(() => action());
-        Label("Text", result.transform, caption, 21, Vector2.zero, rect.sizeDelta, style);
-    }
-
-    private static void Stretch(RectTransform rect)
-    {
-        rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
+        joinCodePopup = transform.Find("JoinCodePopup")?.gameObject;
+        if (joinCodePopup == null)
+        {
+            Debug.LogError("MainScene Canvas에 저장된 JoinCodePopup이 없습니다.");
+            return;
+        }
+        Transform window = joinCodePopup.transform.Find("PopupWindow");
+        joinCodeInput = window?.Find("CodeInput")?.GetComponent<TMP_InputField>();
+        joinCodeError = window?.Find("Error")?.GetComponent<TMP_Text>();
+        if (joinCodeInput != null)
+        {
+            joinCodeInput.onSubmit.RemoveAllListeners();
+            joinCodeInput.onSubmit.AddListener(_ => SubmitJoinCode());
+        }
+        joinCodePopup.SetActive(false);
     }
 }

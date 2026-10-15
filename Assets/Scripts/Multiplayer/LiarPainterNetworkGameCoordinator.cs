@@ -9,7 +9,6 @@ using UnityEngine;
 [RequireComponent(typeof(NetworkObject))]
 public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
 {
-    [SerializeField] private LiarPainterRuleSettings rules = new();
     [SerializeField] private LiarPainterRoundContent roundContent = new();
     [SerializeField] private LiarPainterContentCatalog contentCatalog;
 
@@ -26,20 +25,66 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
     private readonly Dictionary<int, string> strokeOwners = new();
     private readonly List<ulong> drawingOrder = new();
     private readonly VoteService voteService = new();
+    public readonly NetworkVariable<int> RoundNumber = new(0);
+    public readonly NetworkVariable<FixedString64Bytes> DefenseName = new();
+    private ulong defenseClient;
+    private readonly HashSet<ulong> voteCandidates = new();
+    private readonly HashSet<ulong> drawnThisRound = new();
+    private readonly Dictionary<ulong, int> warnings = new();
+    private readonly HashSet<ulong> receivedCandidates = new();
+    private readonly Dictionary<ulong, int> receivedWarnings = new();
+    public event Action RoundStateChanged;
+    public bool IsVoteCandidate(ulong id) => receivedCandidates.Contains(id);
+    public int GetMissedTurn(ulong id) => receivedWarnings.TryGetValue(id, out int turn) ? turn : 0;
     private Coroutine roundRoutine;
     private System.Random roundRandom;
     private DrawingCanvasLineRenderer drawingCanvas;
     private int nextStrokeId;
+    private readonly Dictionary<(ulong client, int localStroke), int> liveStrokeIds = new();
 
     public bool LocalCanDraw { get; private set; }
-    public event Action<LiarPainterPrivateAssignment> PrivateAssignmentReceived;
     public event Action<string> AppraisalResultReceived;
+    public event Action<int, string, bool> AppraisalCompleted;
     public event Action<string> ResultReceived;
     public event Action<bool> LocalDrawingPermissionChanged;
+    public event Action<bool> DrawingTurnStarted;
     public event Action<ulong, bool> ReadyStateChanged;
     public event Action<ulong, string> PlayerRegistered;
     public event Action<ulong> PlayerLeft;
     public event Action ReturnedToWaitingRoom;
+    public event Action GameInterrupted;
+    public event Action VoteCountsChanged;
+    public event Action<bool> KeywordGuessCompleted;
+
+    public void SubmitKeywordGuess(string guess)
+    {
+        if (!IsSpawned || string.IsNullOrWhiteSpace(guess) || guess.Length > 32) return;
+        SubmitKeywordGuessRpc(new FixedString128Bytes(guess.Trim()));
+    }
+
+    public static bool IsCorrectKeywordGuess(string guess, string keyword) =>
+        !string.IsNullOrWhiteSpace(guess) && !string.IsNullOrWhiteSpace(keyword) &&
+        string.Equals(guess.Trim().Normalize(), keyword.Trim().Normalize(), StringComparison.OrdinalIgnoreCase);
+
+    [Rpc(SendTo.Server)]
+    private void SubmitKeywordGuessRpc(FixedString128Bytes guess, RpcParams rpcParams = default)
+    {
+        ulong sender = rpcParams.Receive.SenderClientId;
+        if (Phase.Value != LiarPainterGamePhase.Discussion ||
+            NetworkManager.ServerTime.Time >= PhaseEndsAt.Value || roundRoutine == null ||
+            !playerStates.TryGetValue(sender, out var player) || player.Role != LiarPainterRole.FakePainter) return;
+        bool correct = IsCorrectKeywordGuess(guess.ToString(), roundContent.citizenKeyword);
+        KeywordGuessFeedbackRpc(correct, RpcTarget.Single(sender, RpcTargetUse.Temp));
+        if (!correct) return;
+        StopCoroutine(roundRoutine);
+        roundRoutine = null;
+        FinishGame(new LiarPainterGameOutcome(LiarPainterTeam.FakePainter, null, false, playerStates.Values.ToList()));
+    }
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    private void KeywordGuessFeedbackRpc(bool correct, RpcParams rpcParams = default) => KeywordGuessCompleted?.Invoke(correct);
+    private readonly Dictionary<ulong, int> receivedVoteCounts = new();
+    public int GetReceivedVotes(ulong clientId) => receivedVoteCounts.TryGetValue(clientId, out int count) ? count : 0;
 
     public override void OnNetworkSpawn()
     {
@@ -51,8 +96,7 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
                 readyByClient[clientId] = false;
         }
 
-        string displayName = PlayerPrefs.GetString("LiarPainter.PlayerName", $"Player {NetworkManager.LocalClientId + 1}");
-        RegisterPlayerRpc(new FixedString64Bytes(displayName));
+        RegisterPlayerRpc();
     }
 
     public override void OnNetworkDespawn()
@@ -96,14 +140,16 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
         if (drawingCanvas == null) drawingCanvas = FindFirstObjectByType<DrawingCanvasLineRenderer>();
         if (drawingCanvas == null) return;
         drawingCanvas.NetworkStrokeCompleted += HandleLocalNetworkStroke;
-        drawingCanvas.NetworkStrokeEraseRequested += HandleLocalNetworkErase;
+        drawingCanvas.NetworkStrokeUpdated += HandleLocalNetworkStroke;
+        drawingCanvas.NetworkUndoRequested += HandleLocalNetworkErase;
     }
 
     private void UnbindDrawingCanvas()
     {
         if (drawingCanvas == null) return;
         drawingCanvas.NetworkStrokeCompleted -= HandleLocalNetworkStroke;
-        drawingCanvas.NetworkStrokeEraseRequested -= HandleLocalNetworkErase;
+        drawingCanvas.NetworkStrokeUpdated -= HandleLocalNetworkStroke;
+        drawingCanvas.NetworkUndoRequested -= HandleLocalNetworkErase;
         drawingCanvas = null;
     }
 
@@ -113,9 +159,9 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
         SubmitStrokeRpc(JsonUtility.ToJson(stroke));
     }
 
-    private void HandleLocalNetworkErase(int strokeId)
+    private void HandleLocalNetworkErase()
     {
-        if (IsSpawned && strokeId > 0) EraseStrokeRpc(strokeId);
+        if (IsSpawned) UndoLatestStrokeRpc();
     }
 
     [Rpc(SendTo.Server)]
@@ -127,13 +173,22 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
         NetworkDrawingStroke stroke = JsonUtility.FromJson<NetworkDrawingStroke>(strokeJson);
         if (stroke?.points == null || stroke.points.Length < 2 || stroke.points.Length > 96) return;
 
-        stroke.strokeId = ++nextStrokeId;
+        if (stroke.clientStrokeId == 0) return;
+        var key = (sender, stroke.clientStrokeId);
+        if (!liveStrokeIds.TryGetValue(key, out int strokeId))
+        {
+            strokeId = ++nextStrokeId;
+            liveStrokeIds[key] = strokeId;
+        }
+        else if (!strokeOwners.ContainsKey(strokeId)) return; // Do not resurrect erased strokes.
+        stroke.strokeId = strokeId;
         stroke.ownerPlayerId = PlayerId(sender);
         stroke.width = Mathf.Clamp(stroke.width, 0.001f, 1f);
         for (int i = 0; i < stroke.points.Length; i++)
             stroke.points[i] = Vector3.ClampMagnitude(stroke.points[i], 100f);
 
         if (!RegisterStrokeOwner(stroke.strokeId, sender)) return;
+        drawnThisRound.Add(sender);
         ApplyStrokeRpc(JsonUtility.ToJson(stroke));
     }
 
@@ -145,10 +200,15 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
     }
 
     [Rpc(SendTo.Server)]
-    private void EraseStrokeRpc(int strokeId, RpcParams rpcParams = default)
+    private void UndoLatestStrokeRpc(RpcParams rpcParams = default)
     {
         ulong sender = rpcParams.Receive.SenderClientId;
-        if (!CanClientDraw(sender) || !strokeOwners.TryGetValue(strokeId, out string owner) || owner != PlayerId(sender)) return;
+        if (!CanClientDraw(sender)) return;
+        string owner = PlayerId(sender);
+        int strokeId = 0;
+        foreach (var entry in strokeOwners)
+            if (entry.Value == owner && entry.Key > strokeId) strokeId = entry.Key;
+        if (strokeId == 0) return;
         strokeOwners.Remove(strokeId);
         RemoveStrokeRpc(strokeId);
     }
@@ -161,20 +221,40 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
 
     private bool CanClientDraw(ulong clientId)
     {
+        if (NetworkManager.ServerTime.Time >= PhaseEndsAt.Value) return false;
+        if (Phase.Value == LiarPainterGamePhase.FinalDefense) return clientId == defenseClient;
         int index = AnonymousTurn.Value - 1;
         return Phase.Value == LiarPainterGamePhase.Drawing &&
                index >= 0 && index < drawingOrder.Count && drawingOrder[index] == clientId;
     }
 
     [Rpc(SendTo.Server)]
-    private void RegisterPlayerRpc(FixedString64Bytes displayName, RpcParams rpcParams = default)
+    private void RegisterPlayerRpc(RpcParams rpcParams = default)
     {
         ulong sender = rpcParams.Receive.SenderClientId;
-        displayNames[sender] = displayName.IsEmpty ? $"Player {sender + 1}" : displayName.ToString();
+        displayNames[sender] = GetPlayerName(sender);
         if (!readyByClient.ContainsKey(sender)) readyByClient[sender] = false;
         foreach (KeyValuePair<ulong, string> player in displayNames)
             PlayerRegisteredRpc(player.Key, new FixedString64Bytes(player.Value), RpcTarget.Single(sender, RpcTargetUse.Temp));
         PlayerRegisteredRpc(sender, new FixedString64Bytes(displayNames[sender]), RpcTarget.Not(sender, RpcTargetUse.Temp));
+    }
+
+    private string GetPlayerName(ulong clientId)
+    {
+        if (NetworkManager.ConnectedClients.TryGetValue(clientId, out NetworkClient client) &&
+            client.PlayerObject != null && client.PlayerObject.TryGetComponent(out LiarPainterNetworkPlayer player) &&
+            !player.DisplayName.Value.IsEmpty)
+            return player.DisplayName.Value.ToString();
+        return $"Player {clientId + 1}";
+    }
+
+    public void RefreshPlayerNameServer(ulong clientId)
+    {
+        if (!IsServer || !IsSpawned || !displayNames.ContainsKey(clientId)) return;
+        displayNames[clientId] = GetPlayerName(clientId);
+        foreach (ulong target in NetworkManager.ConnectedClientsIds)
+            PlayerRegisteredRpc(clientId, new FixedString64Bytes(displayNames[clientId]), RpcTarget.Single(target, RpcTargetUse.Temp));
+        if (readyByClient.TryGetValue(clientId, out bool ready)) ReadyChangedRpc(clientId, ready);
     }
 
     [Rpc(SendTo.SpecifiedInParams)]
@@ -206,8 +286,14 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
             Phase.Value != LiarPainterGamePhase.Lobby || roundRoutine != null) return;
 
         ulong[] connected = NetworkManager.ConnectedClientsIds.ToArray();
-        if (connected.Length < rules.minimumPlayers || connected.Length > rules.maximumPlayers) return;
+        if (connected.Length < LiarPainterRuleSettings.minimumPlayers || connected.Length > LiarPainterRuleSettings.maximumPlayers) return;
         if (connected.Any(id => !readyByClient.TryGetValue(id, out bool ready) || !ready)) return;
+        if (connected.Any(id => NetworkManager.ConnectedClients[id].PlayerObject == null ||
+            !NetworkManager.ConnectedClients[id].PlayerObject.TryGetComponent<LiarPainterNetworkPlayer>(out _)))
+        {
+            Debug.LogWarning("모든 참가자의 NetworkPlayer 생성이 완료되어야 게임을 시작할 수 있습니다.");
+            return;
+        }
         roundRandom = new System.Random();
         if (!TryGenerateRoundContent(roundRandom)) return;
         if (string.IsNullOrWhiteSpace(roundContent.citizenKeyword) ||
@@ -220,8 +306,28 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void SubmitVoteRpc(ulong targetClientId, RpcParams rpcParams = default)
     {
-        if (Phase.Value != LiarPainterGamePhase.Voting || !playerStates.ContainsKey(targetClientId)) return;
-        voteService.SubmitVote(PlayerId(rpcParams.Receive.SenderClientId), PlayerId(targetClientId), clientByPlayerId.Keys.ToArray());
+        if (Phase.Value != LiarPainterGamePhase.Voting ||
+            NetworkManager.ServerTime.Time >= PhaseEndsAt.Value ||
+            !playerStates.ContainsKey(rpcParams.Receive.SenderClientId) ||
+            !playerStates.ContainsKey(targetClientId) || !voteCandidates.Contains(targetClientId)) return;
+        if (voteService.SubmitVote(PlayerId(rpcParams.Receive.SenderClientId), PlayerId(targetClientId), clientByPlayerId.Keys.ToArray()))
+            BroadcastVoteCounts();
+    }
+
+    private void BroadcastVoteCounts()
+    {
+        var counts = voteService.CalculateResult().Counts;
+        ulong[] clients = playerStates.Keys.ToArray();
+        int[] totals = clients.Select(id => counts.TryGetValue(PlayerId(id), out int count) ? count : 0).ToArray();
+        VoteCountsRpc(clients, totals);
+    }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    private void VoteCountsRpc(ulong[] clients, int[] totals)
+    {
+        receivedVoteCounts.Clear();
+        for (int i = 0; i < clients.Length && i < totals.Length; i++) receivedVoteCounts[clients[i]] = totals[i];
+        VoteCountsChanged?.Invoke();
     }
 
     [Rpc(SendTo.Server)]
@@ -229,12 +335,27 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
     {
         ulong sender = rpcParams.Receive.SenderClientId;
         if (!playerStates.TryGetValue(sender, out LiarPainterPlayerState player) ||
-            !strokeOwners.TryGetValue(strokeId, out string ownerId)) return;
+            !strokeOwners.TryGetValue(strokeId, out string ownerId) ||
+            Phase.Value != LiarPainterGamePhase.Discussion || NetworkManager.ServerTime.Time >= PhaseEndsAt.Value)
+        {
+            AppraisalFeedbackRpc(strokeId, "", false, RpcTarget.Single(sender, RpcTargetUse.Temp));
+            return;
+        }
 
         RoleAbilityResult result = player.RoleAbility.TryUse(new RoleAbilityContext(Phase.Value, strokeId, ownerId));
         if (result.Succeeded)
+        {
             AppraisalResultRpc(new FixedString64Bytes(result.RevealedPlayerId), RpcTarget.Single(sender, RpcTargetUse.Temp));
+            string name = clientByPlayerId.TryGetValue(ownerId, out ulong ownerClient) && displayNames.TryGetValue(ownerClient, out string displayName)
+                ? displayName : ownerId;
+            AppraisalFeedbackRpc(strokeId, name, true, RpcTarget.Single(sender, RpcTargetUse.Temp));
+        }
+        else AppraisalFeedbackRpc(strokeId, "", false, RpcTarget.Single(sender, RpcTargetUse.Temp));
     }
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    private void AppraisalFeedbackRpc(int strokeId, string displayName, bool succeeded, RpcParams rpcParams = default)
+        => AppraisalCompleted?.Invoke(strokeId, displayName, succeeded);
 
     [Rpc(SendTo.SpecifiedInParams)]
     private void AppraisalResultRpc(FixedString64Bytes ownerPlayerId, RpcParams rpcParams = default)
@@ -244,49 +365,128 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
 
     private IEnumerator RunRound(IReadOnlyList<ulong> clients)
     {
+        var sessions = LiarPainterSessionManager.Instance;
+        if (sessions != null && sessions.CurrentSession != null)
+        {
+            var locking = sessions.SetRoomPlayingAsync(true);
+            while (!locking.IsCompleted) yield return null;
+            if (!locking.Result || clients.Count != NetworkManager.ConnectedClientsIds.Count ||
+                clients.Any(id => !NetworkManager.ConnectedClients.ContainsKey(id) ||
+                    !readyByClient.TryGetValue(id, out bool ready) || !ready))
+            {
+                ResetToWaitingRoom();
+                yield break;
+            }
+        }
         BuildServerRoundState(clients);
         ClearDrawingRpc();
 
-        SetPhase(LiarPainterGamePhase.RoleReveal, rules.roleRevealSeconds);
+        SetPhase(LiarPainterGamePhase.RoleReveal, LiarPainterRuleSettings.roleRevealSeconds);
         foreach (ulong clientId in clients)
         {
             LiarPainterPrivateAssignment assignment = GetPrivateAssignment(clientId);
-            PrivateAssignmentRpc(
-                (int)assignment.VisibleRole,
-                new FixedString128Bytes(assignment.Keyword ?? string.Empty),
-                RpcTarget.Single(clientId, RpcTargetUse.Temp));
+            if (NetworkManager.ConnectedClients.TryGetValue(clientId, out NetworkClient client) &&
+                client.PlayerObject != null &&
+                client.PlayerObject.TryGetComponent(out LiarPainterNetworkPlayer player))
+            {
+                player.AssignPrivateRoleServer(assignment);
+                continue;
+            }
+            Debug.LogError($"플레이어 {clientId}의 NetworkPlayer 프리팹이 없습니다.");
         }
         yield return WaitForPhase();
 
-        Question.Value = new FixedString128Bytes(roundContent.question);
-        SetPhase(LiarPainterGamePhase.QuestionReveal, rules.questionRevealSeconds);
-        yield return WaitForPhase();
-
-        DrawingPlayerCount.Value = drawingOrder.Count;
-        for (int i = 0; i < drawingOrder.Count; i++)
+        for (int round = 1; round <= 2; round++)
         {
-            SetPhase(LiarPainterGamePhase.Drawing, rules.drawingSecondsPerPlayer);
-            AnonymousTurn.Value = i + 1;
-            SetDrawingPermissionRpc(true, RpcTarget.Single(drawingOrder[i], RpcTargetUse.Temp));
+            RoundNumber.Value = round;
+            if (round == 2)
+            {
+                var questions = contentCatalog.Questions.Where(q => !string.IsNullOrWhiteSpace(q) && q != roundContent.question).ToArray();
+                if (questions.Length > 0) roundContent.question = questions[roundRandom.Next(questions.Length)];
+                RoleAssignmentService.Shuffle(drawingOrder, roundRandom);
+            }
+            foreach (var state in playerStates.Values) state.RoleAbility = RoleAbilityFactory.Create(state.Role);
+            drawnThisRound.Clear();
+            warnings.Clear();
+            strokeOwners.Clear();
+            liveStrokeIds.Clear();
+            ClearDrawingRpc();
+            BroadcastRoundState();
+            Question.Value = new FixedString128Bytes(roundContent.question);
+            SetPhase(LiarPainterGamePhase.QuestionReveal, LiarPainterRuleSettings.questionRevealSeconds);
             yield return WaitForPhase();
-            SetDrawingPermissionRpc(false, RpcTarget.Single(drawingOrder[i], RpcTargetUse.Temp));
+
+            DrawingPlayerCount.Value = drawingOrder.Count;
+            for (int i = 0; i < drawingOrder.Count; i++)
+            {
+                AnonymousTurn.Value = i + 1;
+                SetPhase(LiarPainterGamePhase.Drawing, LiarPainterRuleSettings.drawingSecondsPerPlayer);
+                SetDrawingPermissionRpc(true, RpcTarget.Single(drawingOrder[i], RpcTargetUse.Temp));
+                foreach (ulong clientId in clients)
+                    DrawingTurnStartedRpc(clientId == drawingOrder[i], RpcTarget.Single(clientId, RpcTargetUse.Temp));
+                yield return WaitForPhase();
+                SetDrawingPermissionRpc(false, RpcTarget.Single(drawingOrder[i], RpcTargetUse.Temp));
+                if (!drawnThisRound.Contains(drawingOrder[i])) warnings[drawingOrder[i]] = i + 1;
+                BroadcastRoundState();
+            }
+            AnonymousTurn.Value = 0;
+            SetPhase(LiarPainterGamePhase.Discussion, LiarPainterRuleSettings.discussionSeconds);
+            yield return WaitForPhase();
         }
 
-        AnonymousTurn.Value = 0;
-        SetPhase(LiarPainterGamePhase.Discussion, rules.discussionSeconds);
-        yield return WaitForPhase();
+        voteCandidates.Clear();
+        foreach (ulong client in clients) voteCandidates.Add(client);
+        VoteResult voteResult;
+        while (true)
+        {
+            voteService.Clear();
+            BroadcastRoundState();
+            SetPhase(LiarPainterGamePhase.Voting, LiarPainterRuleSettings.votingSeconds);
+            BroadcastVoteCounts();
+            yield return WaitForPhase();
+            voteResult = voteService.CalculateResult();
+            if (voteResult.Counts.Count == 0 || !voteResult.IsTie) break;
+            int highest = voteResult.Counts.Values.Max();
+            voteCandidates.Clear();
+            foreach (var entry in voteResult.Counts)
+                if (entry.Value == highest) voteCandidates.Add(clientByPlayerId[entry.Key]);
+        }
 
-        voteService.Clear();
-        SetPhase(LiarPainterGamePhase.Voting, rules.votingSeconds);
-        yield return WaitForPhase();
+        if (voteResult.Counts.Count > 0)
+        {
+            defenseClient = clientByPlayerId[voteResult.VotedPlayerId];
+            DefenseName.Value = new FixedString64Bytes(displayNames[defenseClient]);
+            SetPhase(LiarPainterGamePhase.FinalDefense, LiarPainterRuleSettings.finalDefenseSeconds);
+            SetDrawingPermissionRpc(true, RpcTarget.Single(defenseClient, RpcTargetUse.Temp));
+            yield return WaitForPhase();
+            SetDrawingPermissionRpc(false, RpcTarget.Single(defenseClient, RpcTargetUse.Temp));
+        }
 
-        VoteResult voteResult = voteService.CalculateResult();
-        LiarPainterGameOutcome outcome = WinConditionService.Evaluate(voteResult, playerStates.Values.ToList(), rules.fakePainterWinsOnVoteTie);
-        SetPhase(LiarPainterGamePhase.Result, rules.resultSeconds);
-        ResultRpc(JsonUtility.ToJson(CreateResultPayload(outcome)));
-        yield return WaitForPhase();
+        var outcome = WinConditionService.Evaluate(voteResult, playerStates.Values.ToList());
+        FinishGame(outcome);
+    }
 
+    private void FinishGame(LiarPainterGameOutcome outcome)
+    {
+        SetPhase(LiarPainterGamePhase.Result, 0);
+        string resultJson = JsonUtility.ToJson(CreateResultPayload(outcome));
         ResetToWaitingRoom();
+        ResultRpc(resultJson);
+    }
+
+    private void BroadcastRoundState()
+    {
+        RoundStateRpc(voteCandidates.ToArray(), warnings.Keys.ToArray(), warnings.Values.ToArray());
+    }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    private void RoundStateRpc(ulong[] candidates, ulong[] players, int[] turns)
+    {
+        receivedCandidates.Clear();
+        foreach (ulong id in candidates) receivedCandidates.Add(id);
+        receivedWarnings.Clear();
+        for (int i = 0; i < players.Length && i < turns.Length; i++) receivedWarnings[players[i]] = turns[i];
+        RoundStateChanged?.Invoke();
     }
 
     [Rpc(SendTo.ClientsAndHost)]
@@ -296,13 +496,8 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
     }
 
     [Rpc(SendTo.SpecifiedInParams)]
-    private void PrivateAssignmentRpc(int visibleRole, FixedString128Bytes keyword, RpcParams rpcParams = default)
-    {
-        PrivateAssignmentReceived?.Invoke(new LiarPainterPrivateAssignment(
-            PlayerId(NetworkManager.LocalClientId),
-            (LiarPainterRole)visibleRole,
-            keyword.ToString()));
-    }
+    private void DrawingTurnStartedRpc(bool isMyTurn, RpcParams rpcParams = default)
+        => DrawingTurnStarted?.Invoke(isMyTurn);
 
     [Rpc(SendTo.SpecifiedInParams)]
     private void SetDrawingPermissionRpc(bool allowed, RpcParams rpcParams = default)
@@ -323,6 +518,7 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
         clientByPlayerId.Clear();
         drawingOrder.Clear();
         strokeOwners.Clear();
+        liveStrokeIds.Clear();
         nextStrokeId = 0;
         voteService.Clear();
 
@@ -380,6 +576,19 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
 
     private void ResetToWaitingRoom()
     {
+        if (LiarPainterSessionManager.Instance != null)
+            _ = LiarPainterSessionManager.Instance.SetRoomPlayingAsync(false);
+        voteService.Clear();
+        voteCandidates.Clear();
+        warnings.Clear();
+        BroadcastRoundState();
+        RoundNumber.Value = 0;
+        DefenseName.Value = default;
+        BroadcastVoteCounts();
+        ClearDrawingRpc();
+        strokeOwners.Clear();
+        liveStrokeIds.Clear();
+        nextStrokeId = 0;
         Phase.Value = LiarPainterGamePhase.Lobby;
         PhaseEndsAt.Value = 0d;
         Question.Value = default;
@@ -411,8 +620,12 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
             StopCoroutine(roundRoutine);
             roundRoutine = null;
             ResetToWaitingRoom();
+            GameInterruptedRpc();
         }
     }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    private void GameInterruptedRpc() => GameInterrupted?.Invoke();
 
     [Rpc(SendTo.ClientsAndHost)]
     private void PlayerLeftRpc(ulong clientId)

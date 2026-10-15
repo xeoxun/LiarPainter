@@ -5,7 +5,6 @@ using Unity.Netcode;
 
 public sealed class LobbyReadyController : MonoBehaviour
 {
-    [SerializeField, Min(4)] private int minimumPlayersToStart = 4;
     [SerializeField] private PlayerSlotView[] playerSlots;
     private LiarPainterNetworkGameCoordinator networkCoordinator;
 
@@ -14,7 +13,7 @@ public sealed class LobbyReadyController : MonoBehaviour
 
     public bool AreAllOccupiedPlayersReady =>
         playerSlots != null &&
-        playerSlots.Count(slot => slot != null && slot.IsOccupied) >= minimumPlayersToStart &&
+        playerSlots.Count(slot => slot != null && slot.IsOccupied) >= LiarPainterRuleSettings.minimumPlayers &&
         playerSlots.Where(slot => slot != null && slot.IsOccupied).All(slot => slot.IsReady);
 
     private void Awake()
@@ -76,9 +75,7 @@ public sealed class LobbyReadyController : MonoBehaviour
             return;
         }
 
-        // 네트워크가 연결되기 전에도 UI를 확인할 수 있는 로컬 동작입니다.
-        // 멀티플레이에서는 서버가 승인한 뒤 ApplyNetworkReadyState를 호출하면 됩니다.
-        ApplyNetworkReadyState(slot, requestedState);
+        // Readiness is only applied after the server acknowledges it.
     }
 
     private void HandleStartClicked(PlayerSlotView slot)

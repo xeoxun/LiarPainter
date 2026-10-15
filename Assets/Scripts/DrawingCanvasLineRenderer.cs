@@ -8,10 +8,33 @@ using UnityEngine.UI;
 public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
 {
     private const int MaxNetworkPointsPerStroke = 96;
+    // Shared drawing space: never derive network geometry from a window's layout/scale.
+    [SerializeField] private Vector2Int drawingReferenceSize = new Vector2Int(1040, 585);
+    private int DrawingWidth => Mathf.Max(1, drawingReferenceSize.x);
+    private int DrawingHeight => Mathf.Max(1, drawingReferenceSize.y);
+    private const float DrawingWorldHeight = 10f;
+    private float DrawingAspect => (float)DrawingWidth / DrawingHeight;
+
+    // Capture the authored UI size in the Editor. Every client uses the same
+    // serialized reference, regardless of its window resolution or Canvas scale.
+    [ContextMenu("Match Drawing Reference To Current UI")]
+    public void MatchDrawingReferenceToCurrentUI()
+    {
+        if (Application.isPlaying) return;
+        Rect rect = GetComponent<RectTransform>().rect;
+        if (rect.width <= 0f || rect.height <= 0f) return;
+        drawingReferenceSize = new Vector2Int(Mathf.RoundToInt(rect.width), Mathf.RoundToInt(rect.height));
+    }
     [SerializeField] private DrawingToolSettings toolSettings;
+    [SerializeField] private LineRenderer strokeTemplate;
     [SerializeField] private float cameraOrthoSize = 5f;
     [SerializeField] private int strokeLayer = 31;
     [SerializeField] private bool inputEnabled = true;
+    [SerializeField, Min(0.02f)] private float networkSendInterval = 0.05f;
+    private float nextNetworkSendTime;
+    private bool strokeDirty;
+    private LineRenderer appraisalOutline;
+    private readonly Dictionary<string, LineRenderer> networkLines = new();
 
     private readonly List<Vector3> currentPoints = new();
     private RectTransform drawingRect;
@@ -23,43 +46,88 @@ public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandl
     private LineRenderer currentLine;
     private Material lineMaterial;
     private int strokeSequence;
+    private bool pointerHeld;
     private string activePlayerId = string.Empty;
 
     public event Action<NetworkDrawingStroke> NetworkStrokeCompleted;
-    public event Action<int> NetworkStrokeEraseRequested;
+    public event Action<NetworkDrawingStroke> NetworkStrokeUpdated;
+    public event Action NetworkUndoRequested;
 
     public int StrokeCount => strokeContainer != null ? strokeContainer.childCount : 0;
     public float WorldUnitsPerPixel { get; private set; }
 
     public void SetDrawingPermission(bool canDraw, string playerId)
     {
+        if (!canDraw && currentLine != null) FinishStroke();
         inputEnabled = canDraw;
         activePlayerId = canDraw ? playerId ?? string.Empty : string.Empty;
-        if (!canDraw && currentLine != null) FinishStroke();
+        if (!canDraw) pointerHeld = false;
     }
 
     public void ClearCanvas()
     {
-        if (strokeContainer == null) return;
-        for (int i = strokeContainer.childCount - 1; i >= 0; i--)
-            Destroy(strokeContainer.GetChild(i).gameObject);
+        HighlightAppraisal(null);
+        currentLine = null;
+        currentPoints.Clear();
+        pointerHeld = false;
+        strokeDirty = false;
+        networkLines.Clear();
+        if (strokeContainer != null)
+            for (int i = strokeContainer.childCount - 1; i >= 0; i--)
+            {
+                GameObject stroke = strokeContainer.GetChild(i).gameObject;
+                stroke.SetActive(false);
+                Destroy(stroke);
+            }
         strokeSequence = 0;
+        if (drawingTexture != null)
+        {
+            RenderTexture previous = RenderTexture.active;
+            try
+            {
+                RenderTexture.active = drawingTexture;
+                GL.Clear(true, true, Color.clear);
+            }
+            finally { RenderTexture.active = previous; }
+        }
     }
 
     private void Awake()
     {
         drawingRect = GetComponent<RectTransform>();
+        var inputGraphic = GetComponent<UnityEngine.UI.Image>();
+        if (inputGraphic != null)
+        {
+            // Background alpha is cosmetic; keep the drawing rectangle clickable.
+            inputGraphic.enabled = true;
+            inputGraphic.raycastTarget = true;
+            inputGraphic.alphaHitTestMinimumThreshold = 0f;
+        }
         rootCanvas = GetComponentInParent<Canvas>()?.rootCanvas;
         if (toolSettings == null) toolSettings = GetComponentInParent<DrawingToolSettings>();
+        if (strokeTemplate == null) strokeTemplate = GetComponent<LineRenderer>();
+        // The authored renderer supplies style only. Each mouse press creates a separate stroke.
+        if (strokeTemplate != null) strokeTemplate.enabled = false;
         CreateDrawingSurface();
+    }
+
+    private void Update()
+    {
+        if (currentLine == null || !strokeDirty || Time.unscaledTime < nextNetworkSendTime) return;
+        SendStrokeUpdate();
+    }
+
+    private void SendStrokeUpdate()
+    {
+        if (currentLine == null || currentPoints.Count < 2) return;
+        NetworkStrokeUpdated?.Invoke(CreateNetworkStroke(currentLine, currentPoints));
+        strokeDirty = false;
+        nextNetworkSendTime = Time.unscaledTime + Mathf.Max(0.02f, networkSendInterval);
     }
 
     private void CreateDrawingSurface()
     {
-        int width = Mathf.Max(1, Mathf.RoundToInt(drawingRect.rect.width * (rootCanvas != null ? rootCanvas.scaleFactor : 1f)));
-        int height = Mathf.Max(1, Mathf.RoundToInt(drawingRect.rect.height * (rootCanvas != null ? rootCanvas.scaleFactor : 1f)));
-
-        drawingTexture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32)
+        drawingTexture = new RenderTexture(DrawingWidth, DrawingHeight, 24, RenderTextureFormat.ARGB32)
         {
             name = "DrawingCanvasTexture",
             antiAliasing = 4,
@@ -67,26 +135,26 @@ public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandl
         };
         drawingTexture.Create();
 
-        GameObject outputObject = new("LineRendererOutput", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
-        outputObject.transform.SetParent(transform, false);
-        RectTransform outputRect = outputObject.GetComponent<RectTransform>();
-        outputRect.anchorMin = Vector2.zero;
-        outputRect.anchorMax = Vector2.one;
-        outputRect.offsetMin = Vector2.zero;
-        outputRect.offsetMax = Vector2.zero;
-        outputImage = outputObject.GetComponent<RawImage>();
+        outputImage = transform.Find("LineRendererOutput")?.GetComponent<RawImage>();
+        if (outputImage == null)
+        {
+            Debug.LogError("DrawingCanvas requires an authored LineRendererOutput RawImage.", this);
+            return;
+        }
         outputImage.texture = drawingTexture;
+        outputImage.canvasRenderer.cullTransparentMesh = false;
         outputImage.raycastTarget = false;
 
         GameObject cameraObject = new("DrawingLineCamera");
         cameraObject.transform.position = new Vector3(10000f, 10000f, -10f);
         drawingCamera = cameraObject.AddComponent<Camera>();
         drawingCamera.orthographic = true;
-        drawingCamera.orthographicSize = cameraOrthoSize;
+        drawingCamera.orthographicSize = DrawingWorldHeight * 0.5f;
         drawingCamera.clearFlags = CameraClearFlags.SolidColor;
         drawingCamera.backgroundColor = Color.clear;
         drawingCamera.cullingMask = 1 << strokeLayer;
         drawingCamera.targetTexture = drawingTexture;
+        drawingCamera.aspect = DrawingAspect;
         drawingCamera.allowHDR = false;
         drawingCamera.allowMSAA = true;
 
@@ -95,7 +163,7 @@ public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandl
         containerObject.transform.position = new Vector3(10000f, 10000f, 0f);
         strokeContainer = containerObject.transform;
 
-        WorldUnitsPerPixel = drawingCamera.orthographicSize * 2f / drawingTexture.height;
+        WorldUnitsPerPixel = DrawingWorldHeight / DrawingHeight;
         Shader shader = Shader.Find("Sprites/Default");
         if (shader == null) shader = Shader.Find("Universal Render Pipeline/Unlit");
         lineMaterial = new Material(shader) { name = "RuntimeDrawingLineMaterial" };
@@ -103,23 +171,17 @@ public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandl
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (!inputEnabled || eventData.button != PointerEventData.InputButton.Left || toolSettings == null) return;
+        if (NetworkChatUIController.IsTyping || !inputEnabled || eventData.button != PointerEventData.InputButton.Left || toolSettings == null) return;
         if (!inputEnabled || !TryGetWorldPoint(eventData, out Vector3 point)) return;
+        pointerHeld = true;
 
-        if (toolSettings.CurrentTool == DrawingToolMode.Pen) StartStroke(point);
-        else if (toolSettings.CurrentTool == DrawingToolMode.PartialEraser) ErasePartial(point);
-        else if (toolSettings.CurrentTool == DrawingToolMode.StrokeEraser) EraseStroke(point);
+        StartStroke(point);
     }
 
     public void OnDrag(PointerEventData eventData)
     {
+        if (!inputEnabled || !pointerHeld || eventData.button != PointerEventData.InputButton.Left) return;
         if (!TryGetWorldPoint(eventData, out Vector3 point)) return;
-
-        if (toolSettings != null && toolSettings.CurrentTool == DrawingToolMode.PartialEraser)
-        {
-            ErasePartial(point);
-            return;
-        }
 
         if (currentLine == null) return;
 
@@ -130,8 +192,25 @@ public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandl
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        if (eventData.button != PointerEventData.InputButton.Left || currentLine == null) return;
-        FinishStroke();
+        if (eventData.button != PointerEventData.InputButton.Left) return;
+        pointerHeld = false;
+        if (currentLine != null) FinishStroke();
+    }
+
+    private LineRenderer CreateLine(GameObject strokeObject)
+    {
+        LineRenderer line = strokeObject.AddComponent<LineRenderer>();
+        line.useWorldSpace = false;
+        line.sharedMaterial = strokeTemplate != null && strokeTemplate.sharedMaterial != null
+            ? strokeTemplate.sharedMaterial : lineMaterial;
+        line.textureMode = strokeTemplate != null ? strokeTemplate.textureMode : LineTextureMode.Stretch;
+        line.alignment = LineAlignment.View;
+        line.numCapVertices = strokeTemplate != null ? Mathf.Max(8, strokeTemplate.numCapVertices) : 8;
+        line.numCornerVertices = strokeTemplate != null ? Mathf.Max(8, strokeTemplate.numCornerVertices) : 8;
+        if (strokeTemplate != null) line.sortingLayerID = strokeTemplate.sortingLayerID;
+        line.enabled = true;
+        line.positionCount = 0;
+        return line;
     }
 
     private void StartStroke(Vector3 point)
@@ -141,13 +220,7 @@ public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandl
         strokeObject.transform.SetParent(strokeContainer, false);
         strokeObject.AddComponent<DrawingStrokeOwner>().Initialize(strokeSequence, activePlayerId);
 
-        currentLine = strokeObject.AddComponent<LineRenderer>();
-        currentLine.useWorldSpace = false;
-        currentLine.material = lineMaterial;
-        currentLine.textureMode = LineTextureMode.Stretch;
-        currentLine.alignment = LineAlignment.View;
-        currentLine.numCapVertices = 8;
-        currentLine.numCornerVertices = 8;
+        currentLine = CreateLine(strokeObject);
         currentLine.sortingOrder = strokeSequence;
 
         Color color = toolSettings.SelectedColor;
@@ -161,6 +234,7 @@ public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandl
         currentPoints.Clear();
         AddPoint(point);
         AddPoint(point);
+        SendStrokeUpdate();
     }
 
     private void AddPoint(Vector3 point)
@@ -168,151 +242,64 @@ public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandl
         currentPoints.Add(point - strokeContainer.position);
         currentLine.positionCount = currentPoints.Count;
         currentLine.SetPositions(currentPoints.ToArray());
+        strokeDirty = true;
     }
 
     private void FinishStroke()
     {
         LineRenderer finishedLine = currentLine;
-        if (currentPoints.Count < 3)
+        if (currentPoints.Count < 2)
         {
             Destroy(finishedLine.gameObject);
         }
         else if (NetworkStrokeCompleted != null)
         {
             NetworkStrokeCompleted.Invoke(CreateNetworkStroke(finishedLine, currentPoints));
-            // The server broadcasts the authoritative copy (including to the sender).
-            Destroy(finishedLine.gameObject);
+            // Keep local feedback; the authoritative echo updates this same renderer.
         }
 
         currentLine = null;
         currentPoints.Clear();
+        strokeDirty = false;
     }
 
-    private void EraseStroke(Vector3 worldPoint)
+    public void UndoLatestOwnStroke()
     {
-        LineRenderer closest = null;
-        float closestDistance = float.MaxValue;
-        foreach (LineRenderer line in strokeContainer.GetComponentsInChildren<LineRenderer>())
+        if (!inputEnabled || string.IsNullOrEmpty(activePlayerId) || strokeContainer == null) return;
+        if (currentLine != null) FinishStroke();
+        pointerHeld = false;
+        if (NetworkUndoRequested != null)
         {
-            DrawingStrokeOwner owner = line.GetComponent<DrawingStrokeOwner>();
-            if (owner != null && owner.OwnerPlayerId != activePlayerId) continue;
-            Vector3[] points = new Vector3[line.positionCount];
-            line.GetPositions(points);
-            for (int i = 1; i < points.Length; i++)
-            {
-                float distance = DistanceToSegment(worldPoint, line.transform.TransformPoint(points[i - 1]), line.transform.TransformPoint(points[i]));
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closest = line;
-                }
-            }
+            NetworkUndoRequested.Invoke();
+            return;
         }
-
-        if (closest != null && closestDistance <= closest.startWidth * 0.5f + WorldUnitsPerPixel * 8f)
-        {
-            DrawingStrokeOwner owner = closest.GetComponent<DrawingStrokeOwner>();
-            if (NetworkStrokeEraseRequested != null && owner != null)
-            {
-                NetworkStrokeEraseRequested.Invoke(owner.StrokeId);
-                return;
-            }
-
-            closest.gameObject.SetActive(false);
-            Destroy(closest.gameObject);
-        }
-    }
-
-    private void ErasePartial(Vector3 worldPoint)
-    {
-        float radius = toolSettings.EraserSize * WorldUnitsPerPixel * 0.5f;
-        LineRenderer[] lines = strokeContainer.GetComponentsInChildren<LineRenderer>();
-        foreach (LineRenderer line in lines)
-        {
-            DrawingStrokeOwner owner = line.GetComponent<DrawingStrokeOwner>();
-            if (owner != null && owner.OwnerPlayerId != activePlayerId) continue;
-            Vector3[] source = new Vector3[line.positionCount];
-            line.GetPositions(source);
-            List<List<Vector3>> segments = new();
-            List<Vector3> current = new();
-
-            foreach (Vector3 localPoint in source)
-            {
-                Vector3 point = line.transform.TransformPoint(localPoint);
-                if (Vector3.Distance(point, worldPoint) <= radius)
-                {
-                    if (current.Count >= 2) segments.Add(current);
-                    current = new List<Vector3>();
-                }
-                else
-                {
-                    current.Add(point);
-                }
-            }
-            if (current.Count >= 2) segments.Add(current);
-            if (segments.Count == 1 && segments[0].Count == source.Length) continue;
-
-            DrawingStrokeOwner originalOwner = line.GetComponent<DrawingStrokeOwner>();
-            bool networked = NetworkStrokeEraseRequested != null && NetworkStrokeCompleted != null && originalOwner != null;
-            if (networked) NetworkStrokeEraseRequested.Invoke(originalOwner.StrokeId);
-
-            foreach (List<Vector3> segment in segments)
-            {
-                LineRenderer replacement = CreateStrokeFromWorldPoints(segment, line);
-                if (networked)
-                {
-                    NetworkStrokeCompleted.Invoke(CreateNetworkStroke(replacement, segment));
-                    Destroy(replacement.gameObject);
-                }
-            }
-            line.gameObject.SetActive(false);
-            Destroy(line.gameObject);
-        }
-    }
-
-    private LineRenderer CreateStrokeFromWorldPoints(List<Vector3> points, LineRenderer source)
-    {
-        GameObject strokeObject = new($"Stroke_{++strokeSequence:0000}");
-        strokeObject.layer = strokeLayer;
-        strokeObject.transform.SetParent(strokeContainer, false);
-        DrawingStrokeOwner sourceOwner = source.GetComponent<DrawingStrokeOwner>();
-        strokeObject.AddComponent<DrawingStrokeOwner>().Initialize(
-            strokeSequence,
-            sourceOwner != null ? sourceOwner.OwnerPlayerId : activePlayerId);
-        LineRenderer line = strokeObject.AddComponent<LineRenderer>();
-        line.useWorldSpace = false;
-        line.material = lineMaterial;
-        line.alignment = source.alignment;
-        line.textureMode = source.textureMode;
-        line.numCapVertices = source.numCapVertices;
-        line.numCornerVertices = source.numCornerVertices;
-        line.startColor = source.startColor;
-        line.endColor = source.endColor;
-        line.startWidth = source.startWidth;
-        line.endWidth = source.endWidth;
-        line.sortingOrder = strokeSequence;
-        line.positionCount = points.Count;
-        for (int i = 0; i < points.Count; i++) line.SetPosition(i, points[i] - strokeContainer.position);
-        return line;
+        DrawingStrokeOwner latest = null;
+        foreach (var owner in strokeContainer.GetComponentsInChildren<DrawingStrokeOwner>())
+            if (owner.OwnerPlayerId == activePlayerId && (latest == null || owner.StrokeId > latest.StrokeId)) latest = owner;
+        if (latest != null) RemoveNetworkStroke(latest.StrokeId);
     }
 
     public void ApplyNetworkStroke(NetworkDrawingStroke stroke)
     {
         if (stroke == null || stroke.points == null || stroke.points.Length < 2 || strokeContainer == null) return;
-        RemoveNetworkStroke(stroke.strokeId);
-
+        string key = $"{stroke.ownerPlayerId}:{stroke.clientStrokeId}";
+        networkLines.TryGetValue(key, out LineRenderer line);
+        if (line != null)
+        {
+            line.GetComponent<DrawingStrokeOwner>().Initialize(stroke.strokeId, stroke.ownerPlayerId);
+            // Never rewind the sender's in-progress line to an older network snapshot.
+            if (line == currentLine) return;
+        }
+        else
+        {
         GameObject strokeObject = new($"Stroke_{stroke.strokeId:0000}");
         strokeObject.layer = strokeLayer;
         strokeObject.transform.SetParent(strokeContainer, false);
         strokeObject.AddComponent<DrawingStrokeOwner>().Initialize(stroke.strokeId, stroke.ownerPlayerId);
 
-        LineRenderer line = strokeObject.AddComponent<LineRenderer>();
-        line.useWorldSpace = false;
-        line.material = lineMaterial;
-        line.textureMode = LineTextureMode.Stretch;
-        line.alignment = LineAlignment.View;
-        line.numCapVertices = 8;
-        line.numCornerVertices = 8;
+        line = CreateLine(strokeObject);
+        networkLines[key] = line;
+        }
         line.sortingOrder = stroke.strokeId;
         line.startColor = stroke.color;
         line.endColor = stroke.color;
@@ -337,6 +324,9 @@ public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandl
 
     private NetworkDrawingStroke CreateNetworkStroke(LineRenderer line, IReadOnlyList<Vector3> sourcePoints)
     {
+        string ownerId = line.GetComponent<DrawingStrokeOwner>()?.OwnerPlayerId ?? activePlayerId;
+        int clientStrokeId = line.GetInstanceID();
+        networkLines[$"{ownerId}:{clientStrokeId}"] = line;
         int outputCount = Mathf.Min(sourcePoints.Count, MaxNetworkPointsPerStroke);
         Vector3[] points = new Vector3[outputCount];
         for (int i = 0; i < outputCount; i++)
@@ -350,20 +340,59 @@ public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandl
 
         return new NetworkDrawingStroke
         {
-            ownerPlayerId = activePlayerId,
+            clientStrokeId = clientStrokeId,
+            ownerPlayerId = ownerId,
             color = line.startColor,
             width = line.startWidth,
             points = points
         };
     }
 
-    private static float DistanceToSegment(Vector3 point, Vector3 start, Vector3 end)
+    public bool TryPickAppraisal(PointerEventData pointer, out LineRenderer picked, out Vector3 anchor)
     {
-        Vector3 segment = end - start;
-        float lengthSquared = segment.sqrMagnitude;
-        if (lengthSquared <= Mathf.Epsilon) return Vector3.Distance(point, start);
-        float t = Mathf.Clamp01(Vector3.Dot(point - start, segment) / lengthSquared);
-        return Vector3.Distance(point, start + segment * t);
+        picked = null;
+        anchor = default;
+        if (strokeContainer == null || !TryGetWorldPoint(pointer, out Vector3 world)) return false;
+        float nearest = float.MaxValue;
+        foreach (var line in strokeContainer.GetComponentsInChildren<LineRenderer>())
+        {
+            if (line == appraisalOutline || line.GetComponent<DrawingStrokeOwner>() == null) continue;
+            for (int i = 1; i < line.positionCount; i++)
+            {
+                Vector3 a = line.transform.TransformPoint(line.GetPosition(i - 1));
+                Vector3 b = line.transform.TransformPoint(line.GetPosition(i));
+                Vector3 ab = b - a;
+                Vector3 closest = a + ab * (ab.sqrMagnitude > 0 ? Mathf.Clamp01(Vector3.Dot(world - a, ab) / ab.sqrMagnitude) : 0);
+                float distance = Vector3.Distance(world, closest);
+                if (distance < nearest && distance <= line.startWidth * 0.5f + WorldUnitsPerPixel * 8)
+                { nearest = distance; picked = line; anchor = closest; }
+            }
+        }
+        return picked != null;
+    }
+
+    public Vector2 DrawingWorldToUI(Vector3 world)
+    {
+        Vector3 local = world - strokeContainer.position;
+        return new Vector2((local.x / (DrawingWorldHeight * DrawingAspect) + .5f) * drawingRect.rect.width + drawingRect.rect.xMin,
+            (local.y / DrawingWorldHeight + .5f) * drawingRect.rect.height + drawingRect.rect.yMin);
+    }
+
+    public void HighlightAppraisal(LineRenderer line)
+    {
+        if (appraisalOutline != null) { appraisalOutline.gameObject.SetActive(false); Destroy(appraisalOutline.gameObject); appraisalOutline = null; }
+        if (line == null) return;
+        var go = new GameObject("AppraisalOutline");
+        go.layer = strokeLayer;
+        go.transform.SetParent(strokeContainer, false);
+        appraisalOutline = CreateLine(go);
+        appraisalOutline.positionCount = line.positionCount;
+        var points = new Vector3[line.positionCount];
+        line.GetPositions(points);
+        appraisalOutline.SetPositions(points);
+        appraisalOutline.startWidth = appraisalOutline.endWidth = line.startWidth + WorldUnitsPerPixel * 6;
+        appraisalOutline.startColor = appraisalOutline.endColor = new Color32(255, 192, 40, 255);
+        appraisalOutline.sortingOrder = line.sortingOrder - 1;
     }
 
     private bool TryGetWorldPoint(PointerEventData eventData, out Vector3 worldPoint)
@@ -379,8 +408,9 @@ public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandl
         Rect rect = drawingRect.rect;
         float normalizedX = Mathf.InverseLerp(rect.xMin, rect.xMax, localPoint.x);
         float normalizedY = Mathf.InverseLerp(rect.yMin, rect.yMax, localPoint.y);
-        worldPoint = drawingCamera.ViewportToWorldPoint(new Vector3(normalizedX, normalizedY, 10f));
-        worldPoint.z = strokeContainer.position.z;
+        worldPoint = strokeContainer.position + new Vector3(
+            (normalizedX - 0.5f) * DrawingWorldHeight * DrawingAspect,
+            (normalizedY - 0.5f) * DrawingWorldHeight, 0f);
         return true;
     }
 
@@ -400,6 +430,7 @@ public sealed class DrawingCanvasLineRenderer : MonoBehaviour, IPointerDownHandl
 [Serializable]
 public sealed class NetworkDrawingStroke
 {
+    public int clientStrokeId;
     public int strokeId;
     public string ownerPlayerId;
     public Color color;

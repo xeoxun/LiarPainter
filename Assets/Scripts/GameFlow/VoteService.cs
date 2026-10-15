@@ -13,10 +13,10 @@ public sealed class VoteService
     public bool SubmitVote(string voterId, string targetPlayerId, IReadOnlyCollection<string> validPlayerIds)
     {
         if (string.IsNullOrWhiteSpace(voterId) || string.IsNullOrWhiteSpace(targetPlayerId)) return false;
-        if (voterId == targetPlayerId) return false;
         if (!validPlayerIds.Contains(voterId) || !validPlayerIds.Contains(targetPlayerId)) return false;
 
         votesByVoter[voterId] = targetPlayerId;
+
         return true;
     }
 

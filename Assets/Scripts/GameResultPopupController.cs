@@ -1,7 +1,5 @@
-using System.Collections;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public sealed class GameResultPopupController : MonoBehaviour
 {
@@ -12,14 +10,10 @@ public sealed class GameResultPopupController : MonoBehaviour
     [SerializeField] private TMP_Text playerKeywordsText;
     [SerializeField] private TMP_Text playerResultsText;
     [SerializeField] private TMP_Text countdownText;
-    [SerializeField, Min(0.1f)] private float displaySeconds = 7f;
-    [SerializeField] private string lobbySceneName = "MainScene";
 
-    private Coroutine closeRoutine;
-
-    public void SetDisplaySeconds(float seconds)
+    public void HideResult()
     {
-        displaySeconds = Mathf.Max(0.1f, seconds);
+        if (popupRoot != null) popupRoot.SetActive(false);
     }
 
     public void Configure(
@@ -46,7 +40,8 @@ public sealed class GameResultPopupController : MonoBehaviour
         string playerNames,
         string playerRoles,
         string playerKeywords,
-        string playerResults)
+        string playerResults,
+        bool managedByNetwork = false)
     {
         if (popupRoot == null) return;
         if (victoryTitleText != null) victoryTitleText.text = victoryTitle;
@@ -57,22 +52,7 @@ public sealed class GameResultPopupController : MonoBehaviour
         popupRoot.SetActive(true);
         popupRoot.transform.SetAsLastSibling();
 
-        if (closeRoutine != null) StopCoroutine(closeRoutine);
-        closeRoutine = StartCoroutine(ReturnToLobbyAfterDelay());
+        if (countdownText != null) countdownText.gameObject.SetActive(false);
     }
 
-    private IEnumerator ReturnToLobbyAfterDelay()
-    {
-        float remaining = displaySeconds;
-        while (remaining > 0f)
-        {
-            if (countdownText != null)
-                countdownText.text = $"{Mathf.CeilToInt(remaining)}초 후 대기실로 돌아갑니다";
-            remaining -= Time.unscaledDeltaTime;
-            yield return null;
-        }
-
-        if (popupRoot != null) popupRoot.SetActive(false);
-        SceneManager.LoadScene(lobbySceneName);
-    }
 }

@@ -13,8 +13,6 @@ public static class KeywordAssignmentService
     public static LiarPainterRole GetVisibleRole(LiarPainterRole actualRole)
     {
         // 알코올 중독 화가는 본인이 특수 직업이라는 사실을 모릅니다.
-        return actualRole == LiarPainterRole.DrunkPainter
-            ? LiarPainterRole.Citizen
-            : actualRole;
+        return actualRole == LiarPainterRole.DrunkPainter ? LiarPainterRole.Citizen : actualRole;
     }
 }
