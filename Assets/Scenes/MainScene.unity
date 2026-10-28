@@ -10487,6 +10487,7 @@ MonoBehaviour:
   myTurnClip: {fileID: 8300000, guid: b660bd221416138479c4b35597b68cfd, type: 3}
   otherTurnClip: {fileID: 8300000, guid: da6ee7f28b32ab54e8d771a7fdc6bb72, type: 3}
   appraisalConfirmClip: {fileID: 8300000, guid: 1433e35de8271c74ca1f9a973a7dbe2a, type: 3}
+  timerWarningClip: {fileID: 8300000, guid: 55bb1acf594727b4aa8d52d00f7ad92b, type: 3}
 --- !u!82 &1813234449
 AudioSource:
   m_ObjectHideFlags: 0

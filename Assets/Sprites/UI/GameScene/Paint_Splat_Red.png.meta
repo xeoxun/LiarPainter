@@ -1,0 +1,1027 @@
+fileFormatVersion: 2
+guid: 97f8f077746bc0a48a5f30548e8bd8c4
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4431758786845993111
+    second: Paint_Splat_Red_0
+  - first:
+      213: -6846774431345645291
+    second: Paint_Splat_Red_1
+  - first:
+      213: 2906789971287373679
+    second: Paint_Splat_Red_2
+  - first:
+      213: 4516492368744381714
+    second: Paint_Splat_Red_3
+  - first:
+      213: -5335077295966899923
+    second: Paint_Splat_Red_4
+  - first:
+      213: -935691274587253493
+    second: Paint_Splat_Red_5
+  - first:
+      213: -8510080505612803477
+    second: Paint_Splat_Red_6
+  - first:
+      213: -936330848320269660
+    second: Paint_Splat_Red_7
+  - first:
+      213: 7921730282560620335
+    second: Paint_Splat_Red_8
+  - first:
+      213: -494478197662050448
+    second: Paint_Splat_Red_9
+  - first:
+      213: -2795903209842906174
+    second: Paint_Splat_Red_10
+  - first:
+      213: 4013200313803078828
+    second: Paint_Splat_Red_11
+  - first:
+      213: -8634637344398790384
+    second: Paint_Splat_Red_12
+  - first:
+      213: -8536770462568578131
+    second: Paint_Splat_Red_13
+  - first:
+      213: -6406678627659407936
+    second: Paint_Splat_Red_14
+  - first:
+      213: -7217272821871597371
+    second: Paint_Splat_Red_15
+  - first:
+      213: -2712289717047464284
+    second: Paint_Splat_Red_16
+  - first:
+      213: -1408542269813069053
+    second: Paint_Splat_Red_17
+  - first:
+      213: 4313542558378592757
+    second: Paint_Splat_Red_18
+  - first:
+      213: 2219873211277319317
+    second: Paint_Splat_Red_19
+  - first:
+      213: 3313795273487350010
+    second: Paint_Splat_Red_20
+  - first:
+      213: 1690454496047817988
+    second: Paint_Splat_Red_21
+  - first:
+      213: 5943142316919251534
+    second: Paint_Splat_Red_22
+  - first:
+      213: 7144185602019081575
+    second: Paint_Splat_Red_23
+  - first:
+      213: 977151669553738701
+    second: Paint_Splat_Red_24
+  - first:
+      213: 1908168274652539391
+    second: Paint_Splat_Red_25
+  - first:
+      213: -104802755713095275
+    second: Paint_Splat_Red_26
+  - first:
+      213: -8148419246314079396
+    second: Paint_Splat_Red_27
+  - first:
+      213: -2789800649208915070
+    second: Paint_Splat_Red_28
+  - first:
+      213: 9070328968077026252
+    second: Paint_Splat_Red_29
+  - first:
+      213: -3591790197212423799
+    second: Paint_Splat_Red_30
+  - first:
+      213: 8235763736867020350
+    second: Paint_Splat_Red_31
+  - first:
+      213: 3029652027419527438
+    second: Paint_Splat_Red_32
+  - first:
+      213: 8609211852246180281
+    second: Paint_Splat_Red_33
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Paint_Splat_Red_0
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 1238
+        height: 1234
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96714d32dda3f72c0800000000000000
+      internalID: -4431758786845993111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_1
+      rect:
+        serializedVersion: 2
+        x: 842
+        y: 1191
+        width: 7
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5196a623eee5bf0a0800000000000000
+      internalID: -6846774431345645291
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_2
+      rect:
+        serializedVersion: 2
+        x: 940
+        y: 1181
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f67704bf31ef65820800000000000000
+      internalID: 2906789971287373679
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_3
+      rect:
+        serializedVersion: 2
+        x: 739
+        y: 1142
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21d75c541edcdae30800000000000000
+      internalID: 4516492368744381714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_4
+      rect:
+        serializedVersion: 2
+        x: 1133
+        y: 966
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d2134ac377ff5f5b0800000000000000
+      internalID: -5335077295966899923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_5
+      rect:
+        serializedVersion: 2
+        x: 1093
+        y: 915
+        width: 17
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b055bc64eb1c303f0800000000000000
+      internalID: -935691274587253493
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_6
+      rect:
+        serializedVersion: 2
+        x: 1125
+        y: 917
+        width: 30
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b62e8f45ede16e980800000000000000
+      internalID: -8510080505612803477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_7
+      rect:
+        serializedVersion: 2
+        x: 963
+        y: 689
+        width: 147
+        height: 94
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a251a9ed0c7103f0800000000000000
+      internalID: -936330848320269660
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_8
+      rect:
+        serializedVersion: 2
+        x: 1099
+        y: 626
+        width: 80
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f270b7a88b3afed60800000000000000
+      internalID: 7921730282560620335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_9
+      rect:
+        serializedVersion: 2
+        x: 1073
+        y: 624
+        width: 27
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0779d27f2b24329f0800000000000000
+      internalID: -494478197662050448
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_10
+      rect:
+        serializedVersion: 2
+        x: 1109
+        y: 610
+        width: 7
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cb60fe08d4f239d0800000000000000
+      internalID: -2795903209842906174
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_11
+      rect:
+        serializedVersion: 2
+        x: 1077
+        y: 494
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cacf7bc2c60c1b730800000000000000
+      internalID: 4013200313803078828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_12
+      rect:
+        serializedVersion: 2
+        x: 1180
+        y: 457
+        width: 9
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 011b9c2651b9b2880800000000000000
+      internalID: -8634637344398790384
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_13
+      rect:
+        serializedVersion: 2
+        x: 1157
+        y: 441
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da38d897e7c478980800000000000000
+      internalID: -8536770462568578131
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_14
+      rect:
+        serializedVersion: 2
+        x: 1157
+        y: 409
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cd16407bb7e617a0800000000000000
+      internalID: -6406678627659407936
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_15
+      rect:
+        serializedVersion: 2
+        x: 1053
+        y: 349
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c823457b9817db90800000000000000
+      internalID: -7217272821871597371
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_16
+      rect:
+        serializedVersion: 2
+        x: 1053
+        y: 336
+        width: 7
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4aee0776fd20c5ad0800000000000000
+      internalID: -2712289717047464284
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_17
+      rect:
+        serializedVersion: 2
+        x: 1059
+        y: 337
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30b6ba4b44ad37ce0800000000000000
+      internalID: -1408542269813069053
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_18
+      rect:
+        serializedVersion: 2
+        x: 1021
+        y: 288
+        width: 47
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f98fab4a18ccdb30800000000000000
+      internalID: 4313542558378592757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_19
+      rect:
+        serializedVersion: 2
+        x: 1106
+        y: 304
+        width: 24
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 59c179c9ce29ece10800000000000000
+      internalID: 2219873211277319317
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_20
+      rect:
+        serializedVersion: 2
+        x: 1155
+        y: 303
+        width: 8
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af8f4967e37fcfd20800000000000000
+      internalID: 3313795273487350010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_21
+      rect:
+        serializedVersion: 2
+        x: 1162
+        y: 307
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40564e16863b57710800000000000000
+      internalID: 1690454496047817988
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_22
+      rect:
+        serializedVersion: 2
+        x: 1053
+        y: 216
+        width: 7
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e426099f2784a7250800000000000000
+      internalID: 5943142316919251534
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_23
+      rect:
+        serializedVersion: 2
+        x: 635
+        y: 75
+        width: 65
+        height: 67
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76dbec914fe352360800000000000000
+      internalID: 7144185602019081575
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_24
+      rect:
+        serializedVersion: 2
+        x: 713
+        y: 130
+        width: 12
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc33e6b244a8f8d00800000000000000
+      internalID: 977151669553738701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_25
+      rect:
+        serializedVersion: 2
+        x: 794
+        y: 134
+        width: 9
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff9a5569fec2b7a10800000000000000
+      internalID: 1908168274652539391
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_26
+      rect:
+        serializedVersion: 2
+        x: 715
+        y: 75
+        width: 48
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5992d3ee27aab8ef0800000000000000
+      internalID: -104802755713095275
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_27
+      rect:
+        serializedVersion: 2
+        x: 762
+        y: 109
+        width: 7
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5b3e7e1edffaee80800000000000000
+      internalID: -8148419246314079396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_28
+      rect:
+        serializedVersion: 2
+        x: 932
+        y: 105
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 28b9fbd2713a849d0800000000000000
+      internalID: -2789800649208915070
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_29
+      rect:
+        serializedVersion: 2
+        x: 701
+        y: 60
+        width: 7
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc3aa2ac32840ed70800000000000000
+      internalID: 9070328968077026252
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_30
+      rect:
+        serializedVersion: 2
+        x: 731
+        y: 59
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9895c6388d5672ec0800000000000000
+      internalID: -3591790197212423799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_31
+      rect:
+        serializedVersion: 2
+        x: 502
+        y: 18
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3e9006db7f4b4270800000000000000
+      internalID: 8235763736867020350
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_32
+      rect:
+        serializedVersion: 2
+        x: 731
+        y: 32
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e090267977c7b0a20800000000000000
+      internalID: 3029652027419527438
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Paint_Splat_Red_33
+      rect:
+        serializedVersion: 2
+        x: 675
+        y: 2
+        width: 23
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b16739e0901a7770800000000000000
+      internalID: 8609211852246180281
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Paint_Splat_Red_0: -4431758786845993111
+      Paint_Splat_Red_1: -6846774431345645291
+      Paint_Splat_Red_10: -2795903209842906174
+      Paint_Splat_Red_11: 4013200313803078828
+      Paint_Splat_Red_12: -8634637344398790384
+      Paint_Splat_Red_13: -8536770462568578131
+      Paint_Splat_Red_14: -6406678627659407936
+      Paint_Splat_Red_15: -7217272821871597371
+      Paint_Splat_Red_16: -2712289717047464284
+      Paint_Splat_Red_17: -1408542269813069053
+      Paint_Splat_Red_18: 4313542558378592757
+      Paint_Splat_Red_19: 2219873211277319317
+      Paint_Splat_Red_2: 2906789971287373679
+      Paint_Splat_Red_20: 3313795273487350010
+      Paint_Splat_Red_21: 1690454496047817988
+      Paint_Splat_Red_22: 5943142316919251534
+      Paint_Splat_Red_23: 7144185602019081575
+      Paint_Splat_Red_24: 977151669553738701
+      Paint_Splat_Red_25: 1908168274652539391
+      Paint_Splat_Red_26: -104802755713095275
+      Paint_Splat_Red_27: -8148419246314079396
+      Paint_Splat_Red_28: -2789800649208915070
+      Paint_Splat_Red_29: 9070328968077026252
+      Paint_Splat_Red_3: 4516492368744381714
+      Paint_Splat_Red_30: -3591790197212423799
+      Paint_Splat_Red_31: 8235763736867020350
+      Paint_Splat_Red_32: 3029652027419527438
+      Paint_Splat_Red_33: 8609211852246180281
+      Paint_Splat_Red_4: -5335077295966899923
+      Paint_Splat_Red_5: -935691274587253493
+      Paint_Splat_Red_6: -8510080505612803477
+      Paint_Splat_Red_7: -936330848320269660
+      Paint_Splat_Red_8: 7921730282560620335
+      Paint_Splat_Red_9: -494478197662050448
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

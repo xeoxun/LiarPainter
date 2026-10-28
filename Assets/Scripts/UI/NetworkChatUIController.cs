@@ -13,6 +13,7 @@ public sealed class NetworkChatUIController : MonoBehaviour
     [SerializeField] private TMP_Text latestMessageText;
     private readonly Queue<string> messages = new();
     private float nextSendTime;
+    private MainMenuSettingsController settingsController;
     public static bool IsTyping { get; private set; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -30,7 +31,29 @@ public sealed class NetworkChatUIController : MonoBehaviour
         if (chatInput != null) chatInput.onSubmit.RemoveListener(Submit);
         IsTyping = false;
     }
-    private void Update() => IsTyping = chatPopup != null && chatPopup.activeInHierarchy && chatInput != null && chatInput.isFocused;
+    private void Update()
+    {
+        if (gameObject.scene.name == "GameScene")
+        {
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            if (keyboard != null && keyboard.tabKey.wasPressedThisFrame) ToggleChat();
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame) ToggleSettings();
+#elif ENABLE_LEGACY_INPUT_MANAGER
+            if (Input.GetKeyDown(KeyCode.Tab)) ToggleChat();
+            if (Input.GetKeyDown(KeyCode.Escape)) ToggleSettings();
+#endif
+        }
+        IsTyping = chatPopup != null && chatPopup.activeInHierarchy && chatInput != null && chatInput.isFocused;
+    }
+
+    private void ToggleSettings()
+    {
+        if (settingsController == null)
+            settingsController = FindObjectsByType<MainMenuSettingsController>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .FirstOrDefault(controller => controller.gameObject.scene == gameObject.scene);
+        if (settingsController != null) settingsController.ToggleSettings();
+    }
     public void ToggleChat() => SetChatOpen(chatPopup != null && !chatPopup.activeSelf);
     public void CloseChat() => SetChatOpen(false);
     public void SetChatOpen(bool open)

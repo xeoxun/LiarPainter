@@ -1,0 +1,637 @@
+fileFormatVersion: 2
+guid: b8ad7fb2aa177ff4898f5586e9eb0a72
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8560035663952243212
+    second: Role_FakePainter_0
+  - first:
+      213: 3613239706565819777
+    second: Role_FakePainter_1
+  - first:
+      213: 423336415726089954
+    second: Role_FakePainter_2
+  - first:
+      213: 3641224122866244817
+    second: Role_FakePainter_3
+  - first:
+      213: -310412832374210790
+    second: Role_FakePainter_4
+  - first:
+      213: -1574673382165021175
+    second: Role_FakePainter_5
+  - first:
+      213: 5559116244880995253
+    second: Role_FakePainter_6
+  - first:
+      213: 3418482665735698621
+    second: Role_FakePainter_7
+  - first:
+      213: 2533275864386720259
+    second: Role_FakePainter_8
+  - first:
+      213: -1896327311907490527
+    second: Role_FakePainter_9
+  - first:
+      213: -183819910810038874
+    second: Role_FakePainter_10
+  - first:
+      213: 729750486560171332
+    second: Role_FakePainter_11
+  - first:
+      213: -3367713371784917520
+    second: Role_FakePainter_12
+  - first:
+      213: -4099276343149425782
+    second: Role_FakePainter_13
+  - first:
+      213: -6385412511585722428
+    second: Role_FakePainter_14
+  - first:
+      213: 7684344492637956778
+    second: Role_FakePainter_15
+  - first:
+      213: 8161957393652673870
+    second: Role_FakePainter_16
+  - first:
+      213: -3395640595992941858
+    second: Role_FakePainter_17
+  - first:
+      213: 3373329604051196352
+    second: Role_FakePainter_18
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Role_FakePainter_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1235
+        height: 1254
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0a6c86551b5bc670800000000000000
+      internalID: 8560035663952243212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_1
+      rect:
+        serializedVersion: 2
+        x: 1190
+        y: 1140
+        width: 45
+        height: 76
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18d313e8e5ec42230800000000000000
+      internalID: 3613239706565819777
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_2
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 666
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e637d72a3effd500800000000000000
+      internalID: 423336415726089954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_3
+      rect:
+        serializedVersion: 2
+        x: 1141
+        y: 632
+        width: 24
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1dc96073c0a388230800000000000000
+      internalID: 3641224122866244817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_4
+      rect:
+        serializedVersion: 2
+        x: 1143
+        y: 608
+        width: 16
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a1fbc907c2131bbf0800000000000000
+      internalID: -310412832374210790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_5
+      rect:
+        serializedVersion: 2
+        x: 1165
+        y: 610
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90e7ac2e6e2a52ae0800000000000000
+      internalID: -1574673382165021175
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_6
+      rect:
+        serializedVersion: 2
+        x: 1165
+        y: 602
+        width: 8
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b33c3175c2f52d40800000000000000
+      internalID: 5559116244880995253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_7
+      rect:
+        serializedVersion: 2
+        x: 1172
+        y: 602
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db8b1026fd3e07f20800000000000000
+      internalID: 3418482665735698621
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_8
+      rect:
+        serializedVersion: 2
+        x: 1131
+        y: 597
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30257de0af0082320800000000000000
+      internalID: 2533275864386720259
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_9
+      rect:
+        serializedVersion: 2
+        x: 1133
+        y: 594
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 125f1e36b54eea5e0800000000000000
+      internalID: -1896327311907490527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_10
+      rect:
+        serializedVersion: 2
+        x: 1157
+        y: 584
+        width: 12
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ad0689d3c0f27df0800000000000000
+      internalID: -183819910810038874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_11
+      rect:
+        serializedVersion: 2
+        x: 1157
+        y: 565
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 445661e7338902a00800000000000000
+      internalID: 729750486560171332
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_12
+      rect:
+        serializedVersion: 2
+        x: 1159
+        y: 531
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0fd4d61088a7341d0800000000000000
+      internalID: -3367713371784917520
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_13
+      rect:
+        serializedVersion: 2
+        x: 82
+        y: 435
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a8b8a6282e17c17c0800000000000000
+      internalID: -4099276343149425782
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_14
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 433
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4cf199ee6257267a0800000000000000
+      internalID: -6385412511585722428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_15
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 433
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aaa2a674a9644aa60800000000000000
+      internalID: 7684344492637956778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_16
+      rect:
+        serializedVersion: 2
+        x: 106
+        y: 385
+        width: 8
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e4d6a807109154170800000000000000
+      internalID: 8161957393652673870
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_17
+      rect:
+        serializedVersion: 2
+        x: 90
+        y: 346
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: edae1fa6ed240e0d0800000000000000
+      internalID: -3395640595992941858
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Role_FakePainter_18
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 81
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c9d7c7f66970de20800000000000000
+      internalID: 3373329604051196352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Role_FakePainter_0: 8560035663952243212
+      Role_FakePainter_1: 3613239706565819777
+      Role_FakePainter_10: -183819910810038874
+      Role_FakePainter_11: 729750486560171332
+      Role_FakePainter_12: -3367713371784917520
+      Role_FakePainter_13: -4099276343149425782
+      Role_FakePainter_14: -6385412511585722428
+      Role_FakePainter_15: 7684344492637956778
+      Role_FakePainter_16: 8161957393652673870
+      Role_FakePainter_17: -3395640595992941858
+      Role_FakePainter_18: 3373329604051196352
+      Role_FakePainter_2: 423336415726089954
+      Role_FakePainter_3: 3641224122866244817
+      Role_FakePainter_4: -310412832374210790
+      Role_FakePainter_5: -1574673382165021175
+      Role_FakePainter_6: 5559116244880995253
+      Role_FakePainter_7: 3418482665735698621
+      Role_FakePainter_8: 2533275864386720259
+      Role_FakePainter_9: -1896327311907490527
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

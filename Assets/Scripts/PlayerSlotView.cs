@@ -80,6 +80,22 @@ public sealed class PlayerSlotView : MonoBehaviour
         if (warningText != null) { warningText.text = turn > 0 ? $"{turn}번째 - 그림 미작성" : string.Empty; warningText.gameObject.SetActive(turn > 0); }
     }
     private bool hasPrivateAssignment;
+    private bool gameInProgress;
+
+    public void SetGameInProgress(bool active)
+    {
+        gameInProgress = active;
+        RefreshStatusVisibility();
+    }
+
+    private void RefreshStatusVisibility()
+    {
+        if (statusText == null)
+            statusText = GetComponentsInChildren<TMP_Text>(true)
+                .FirstOrDefault(text => text.name == "StateText" || text.name == "StatusText");
+        if (statusText != null)
+            statusText.gameObject.SetActive(!gameInProgress && !hasPrivateAssignment);
+    }
 
     public void ShowPrivateAssignment(LiarPainterPrivateAssignment assignment)
     {
@@ -102,7 +118,6 @@ public sealed class PlayerSlotView : MonoBehaviour
             privateKeywordText.text = "제시어: " + (assignment.VisibleRole == LiarPainterRole.FakePainter ? "없음" : assignment.Keyword);
             privateKeywordText.gameObject.SetActive(true);
         }
-        if (statusText != null) statusText.gameObject.SetActive(false);
         RefreshReadyControls();
     }
 
@@ -113,7 +128,6 @@ public sealed class PlayerSlotView : MonoBehaviour
         if (privateKeywordText == null) privateKeywordText = transform.Find("PrivateKeywordText")?.GetComponent<TMP_Text>();
         foreach (var label in new[] { privateRoleText, privateKeywordText })
             if (label != null) { label.text = string.Empty; label.gameObject.SetActive(false); }
-        if (statusText != null) statusText.gameObject.SetActive(true);
         RefreshReadyControls();
     }
     [SerializeField] private UnityEngine.UI.Button voteButton;
@@ -183,7 +197,7 @@ public sealed class PlayerSlotView : MonoBehaviour
         NetworkClientId = ulong.MaxValue;
 
         if (playerNameText != null) playerNameText.text = "빈 자리";
-        if (statusText != null) statusText.text = "플레이어 대기 중";
+        if (statusText != null) statusText.text = "플레이어 모집 중";
         RefreshReadyControls();
         gameObject.SetActive(true);
     }
@@ -211,7 +225,7 @@ public sealed class PlayerSlotView : MonoBehaviour
     public void SetReadyState(bool isReady)
     {
         IsReady = isReady;
-        if (statusText != null) statusText.text = isReady ? "준비완료" : "대기 중";
+        if (statusText != null) statusText.text = isReady ? "<color=#00DB3B>준비완료</color>" : "대기 중";
         RefreshReadyControls();
     }
 
@@ -232,6 +246,7 @@ public sealed class PlayerSlotView : MonoBehaviour
 
     private void RefreshReadyControls()
     {
+        RefreshStatusVisibility();
         if (readyButton != null) readyButton.gameObject.SetActive(!hasPrivateAssignment && !voting && IsOccupied && IsLocalPlayer);
         if (readyButtonText != null) readyButtonText.text = IsReady ? "준비취소" : "준비하기";
         if (startGameButton != null) startGameButton.gameObject.SetActive(!hasPrivateAssignment && !voting && IsOccupied && IsLocalPlayer && IsHost);

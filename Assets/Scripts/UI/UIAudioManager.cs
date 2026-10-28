@@ -10,6 +10,7 @@ public sealed class UIAudioManager : MonoBehaviour
     [SerializeField] private AudioClip myTurnClip;
     [SerializeField] private AudioClip otherTurnClip;
     [SerializeField] private AudioClip appraisalConfirmClip;
+    [SerializeField] private AudioClip timerWarningClip;
     private AudioSource source;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -51,6 +52,8 @@ public sealed class UIAudioManager : MonoBehaviour
     {
         PlayEffect(appraisalConfirmClip);
     }
+
+    public void PlayTimerWarning() => PlayEffect(timerWarningClip);
 
     private void PlayEffect(AudioClip clip)
     {

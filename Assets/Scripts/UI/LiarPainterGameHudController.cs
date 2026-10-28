@@ -27,6 +27,7 @@ public sealed class LiarPainterGameHudController : MonoBehaviour
     [SerializeField] private GameObject questionPopup;
     [SerializeField] private TMP_Text questionPopupText;
     [SerializeField] private TMP_Text roundGuideText;
+    [SerializeField] private TMP_Text drawingNextText;
     [SerializeField] private GameObject gameInterruptedPopup;
 
     public void CloseGameInterruptedPopup()
@@ -46,6 +47,9 @@ public sealed class LiarPainterGameHudController : MonoBehaviour
     private bool localCanDraw;
     private LiarPainterGamePhase displayedPhase = LiarPainterGamePhase.Lobby;
     private Coroutine statusFadeRoutine;
+    private double warningDeadline = double.NaN;
+    private LiarPainterGamePhase warningPhase;
+    private bool timerWarningPlayed;
     private PlayerSlotView[] votingSlots;
     private ulong selectedVote = ulong.MaxValue;
 
@@ -104,7 +108,23 @@ public sealed class LiarPainterGameHudController : MonoBehaviour
         double remaining = networkCoordinator.Phase.Value == LiarPainterGamePhase.Lobby
             ? 0d : Math.Max(0d, networkCoordinator.PhaseEndsAt.Value - networkCoordinator.NetworkManager.ServerTime.Time);
 
+        UpdateTimerWarning((float)remaining, networkCoordinator.Phase.Value, networkCoordinator.PhaseEndsAt.Value);
         SetTimer((float)remaining);
+    }
+
+    private void UpdateTimerWarning(float remaining, LiarPainterGamePhase phase, double deadline)
+    {
+        // Each drawing turn/revote has its own deadline, even when the phase is unchanged.
+        if (deadline != warningDeadline || phase != warningPhase)
+        {
+            warningDeadline = deadline;
+            warningPhase = phase;
+            timerWarningPlayed = false;
+        }
+        if (phase == LiarPainterGamePhase.Lobby || phase == LiarPainterGamePhase.Result ||
+            remaining <= 0f || remaining > 3f || timerWarningPlayed) return;
+        timerWarningPlayed = true;
+        if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTimerWarning();
     }
 
     private void SetTimer(float remaining)
@@ -112,7 +132,12 @@ public sealed class LiarPainterGameHudController : MonoBehaviour
         if (timerText == null) return;
         int seconds = Mathf.CeilToInt(Mathf.Max(0f, remaining));
 
-        timerText.text = $"{seconds / 60:00}:{seconds % 60:00}";
+        string formatted = $"{seconds / 60:00}:{seconds % 60:00}";
+        bool urgent = seconds <= 3 && networkCoordinator != null && networkCoordinator.IsSpawned &&
+            networkCoordinator.Phase.Value != LiarPainterGamePhase.Lobby &&
+            networkCoordinator.Phase.Value != LiarPainterGamePhase.Result;
+        timerText.richText = true;
+        timerText.text = urgent ? $"<color=#FF4444>{formatted}</color>" : formatted;
     }
 
     public void EnsurePersonalProgressPopup()
@@ -167,6 +192,7 @@ public sealed class LiarPainterGameHudController : MonoBehaviour
         networkCoordinator.Question.OnValueChanged += HandleNetworkQuestionChanged;
         networkCoordinator.DefenseName.OnValueChanged += HandleDefenseNameChanged;
         networkCoordinator.RoundNumber.OnValueChanged += HandleRoundNumberChanged;
+        networkCoordinator.DrawingOrderAssigned += HandleDrawingOrderAssigned;
         networkCoordinator.AnonymousTurn.OnValueChanged += HandleNetworkTurnChanged;
         networkCoordinator.DrawingPlayerCount.OnValueChanged += HandleNetworkPlayerCountChanged;
         networkCoordinator.Phase.OnValueChanged += HandleNetworkPhaseChanged;
@@ -185,6 +211,7 @@ public sealed class LiarPainterGameHudController : MonoBehaviour
         networkCoordinator.Question.OnValueChanged -= HandleNetworkQuestionChanged;
         networkCoordinator.DefenseName.OnValueChanged -= HandleDefenseNameChanged;
         networkCoordinator.RoundNumber.OnValueChanged -= HandleRoundNumberChanged;
+        networkCoordinator.DrawingOrderAssigned -= HandleDrawingOrderAssigned;
         networkCoordinator.AnonymousTurn.OnValueChanged -= HandleNetworkTurnChanged;
         networkCoordinator.DrawingPlayerCount.OnValueChanged -= HandleNetworkPlayerCountChanged;
         networkCoordinator.Phase.OnValueChanged -= HandleNetworkPhaseChanged;
@@ -203,11 +230,20 @@ public sealed class LiarPainterGameHudController : MonoBehaviour
 
     private void HandleRoundNumberChanged(int previous, int current) => RefreshRoundGuide();
 
+    private void HandleDrawingOrderAssigned(int order)
+    {
+        if (drawingNextText == null && questionPopup != null)
+            drawingNextText = questionPopup.GetComponentsInChildren<TMP_Text>(true)
+                .FirstOrDefault(text => text.name == "DrawingNextText");
+        if (drawingNextText != null)
+            drawingNextText.text = order > 0 ? $"당신은 {order}번째로 그림을 그립니다." : string.Empty;
+    }
+
     private void RefreshRoundGuide()
     {
         if (roundGuideText == null && questionPopup != null)
-            roundGuideText = questionPopup.GetComponentsInChildren<TMP_Text>(true)
-                .FirstOrDefault(text => text.name == "RoundGuideText");
+            roundGuideText = questionPopup.GetComponentsInChildren<TMP_Text>(true).FirstOrDefault(text => text.name == "RoundGuideText");
+
         if (roundGuideText == null || networkCoordinator == null) return;
         roundGuideText.text = networkCoordinator.RoundNumber.Value switch
         {
@@ -376,6 +412,7 @@ public sealed class LiarPainterGameHudController : MonoBehaviour
         if (visible)
         {
             RefreshRoundGuide();
+            HandleDrawingOrderAssigned(networkCoordinator.LocalDrawingOrder);
             if (questionPopupText != null) questionPopupText.text = networkCoordinator.Question.Value.ToString();
             questionPopup.transform.SetAsLastSibling();
         }
@@ -401,13 +438,17 @@ public sealed class LiarPainterGameHudController : MonoBehaviour
     private void SetStatus(LiarPainterGamePhase phase)
     {
         displayedPhase = phase;
+        if (votingSlots != null)
+            foreach (var slot in votingSlots) slot.SetGameInProgress(phase != LiarPainterGamePhase.Lobby);
 
         SetRound(networkCoordinator != null ? networkCoordinator.AnonymousTurn.Value : 0,
             networkCoordinator != null ? networkCoordinator.DrawingPlayerCount.Value : 0);
 
         if (gameStatusText == null) return;
 
-        if (phase == LiarPainterGamePhase.Result)
+        if (phase == LiarPainterGamePhase.RoleReveal ||
+            phase == LiarPainterGamePhase.QuestionReveal ||
+            phase == LiarPainterGamePhase.Result)
         {
             if (statusFadeRoutine != null) StopCoroutine(statusFadeRoutine);
             statusFadeRoutine = null;
@@ -418,14 +459,12 @@ public sealed class LiarPainterGameHudController : MonoBehaviour
 
         gameStatusText.text = phase switch
         {
-            LiarPainterGamePhase.RoleReveal => "직업과 키워드를 확인하세요.",
-            LiarPainterGamePhase.QuestionReveal => "이번 질문을 확인하세요.",
             LiarPainterGamePhase.Drawing when localCanDraw => "당신의 턴입니다. 그림을 그려주세요!",
             LiarPainterGamePhase.Drawing => "다른 플레이어가 그림을 그리고 있습니다.",
             LiarPainterGamePhase.Discussion => "검증 시간입니다. 완성된 그림을 확인하세요.",
             LiarPainterGamePhase.Voting => "사짜 화가라고 생각하는 플레이어에게 투표하세요.",
             LiarPainterGamePhase.FinalDefense =>
-                $"<color=#FF4444>{networkCoordinator.DefenseName.Value.ToString().Replace("<", "＜").Replace(">", "＞")}</color>님의 최후 변론입니다.",
+                $"<color=#FF4444>{networkCoordinator.DefenseName.Value.ToString().Replace("<", "＜").Replace(">", "＞")}</color>님, 최후의 그림을 그려주세요.",
             _ => "플레이어 준비를 기다리고 있습니다."
         };
 

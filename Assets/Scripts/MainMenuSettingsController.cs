@@ -47,6 +47,13 @@ public sealed class MainMenuSettingsController : MonoBehaviour
         Initialize();
     }
 
+    public void ToggleSettings()
+    {
+        if (settingsPopup == null) return;
+        if (settingsPopup.activeSelf) CloseSettings();
+        else OpenSettings();
+    }
+
     private void Initialize()
     {
         if (initialized) return;

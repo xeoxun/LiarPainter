@@ -43,6 +43,8 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
     private readonly Dictionary<(ulong client, int localStroke), int> liveStrokeIds = new();
 
     public bool LocalCanDraw { get; private set; }
+    public int LocalDrawingOrder { get; private set; }
+    public event Action<int> DrawingOrderAssigned;
     public event Action<string> AppraisalResultReceived;
     public event Action<int, string, bool> AppraisalCompleted;
     public event Action<string> ResultReceived;
@@ -413,6 +415,8 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
             ClearDrawingRpc();
             BroadcastRoundState();
             Question.Value = new FixedString128Bytes(roundContent.question);
+            for (int i = 0; i < drawingOrder.Count; i++)
+                AssignDrawingOrderRpc(i + 1, RpcTarget.Single(drawingOrder[i], RpcTargetUse.Temp));
             SetPhase(LiarPainterGamePhase.QuestionReveal, LiarPainterRuleSettings.questionRevealSeconds);
             yield return WaitForPhase();
 
@@ -493,6 +497,13 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
     private void ClearDrawingRpc()
     {
         drawingCanvas?.ClearCanvas();
+    }
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    private void AssignDrawingOrderRpc(int order, RpcParams rpcParams = default)
+    {
+        LocalDrawingOrder = order;
+        DrawingOrderAssigned?.Invoke(order);
     }
 
     [Rpc(SendTo.SpecifiedInParams)]
@@ -606,6 +617,8 @@ public sealed class LiarPainterNetworkGameCoordinator : NetworkBehaviour
     [Rpc(SendTo.ClientsAndHost)]
     private void ReturnedToWaitingRoomRpc()
     {
+        LocalDrawingOrder = 0;
+        DrawingOrderAssigned?.Invoke(0);
         ReturnedToWaitingRoom?.Invoke();
     }
 

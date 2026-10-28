@@ -14,7 +14,8 @@ public enum LiarPainterKeywordCategory
     Vehicle,
     Nature,
     Fantasy,
-    PlayAndSports
+    PlayAndSports,
+    Animation
 }
 
 [Serializable]
@@ -30,14 +31,28 @@ public sealed class LiarPainterKeywordEntry
     }
 }
 
+[Serializable]
+public sealed class LiarPainterCategoryQuestions
+{
+    public LiarPainterKeywordCategory category;
+    public List<string> questions = new();
+}
+
 [CreateAssetMenu(fileName = "LiarPainterContentCatalog", menuName = "Liar Painter/Content Catalog")]
 public sealed class LiarPainterContentCatalog : ScriptableObject
 {
     [SerializeField] private List<string> questions = new();
     [SerializeField] private List<LiarPainterKeywordEntry> keywords = new();
+    [SerializeField] private List<LiarPainterCategoryQuestions> categoryQuestions = new();
 
     public IReadOnlyList<string> Questions => questions;
     public IReadOnlyList<LiarPainterKeywordEntry> Keywords => keywords;
+    public IReadOnlyList<LiarPainterCategoryQuestions> CategoryQuestions => categoryQuestions;
+
+    public IReadOnlyList<string> GetCategoryQuestions(LiarPainterKeywordCategory category) => categoryQuestions
+        .Where(group => group != null && group.category == category)
+        .SelectMany(group => group.questions ?? new List<string>())
+        .Where(question => !string.IsNullOrWhiteSpace(question)).Distinct().ToArray();
 
     public void ReplaceContent(IEnumerable<string> newQuestions, IEnumerable<LiarPainterKeywordEntry> newKeywords)
     {
